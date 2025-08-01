@@ -971,7 +971,7 @@ export class TranslationService {
       { code: 'ar', name: 'العربية', flag: '🇲🇦' },
       { code: 'en', name: 'English', flag: '🇺🇸' },
       { code: 'es', name: 'Español', flag: '🇪🇸' },
-      { code: 'ber', name: 'ⵜⴰⵎⴰⵣⵉⵖⵜ', flag: '🇲🇦' }
+      { code: 'ber', name: 'Tamazight', flag: '🇲🇦' }
     ];
   }
 }
