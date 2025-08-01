@@ -8,7 +8,9 @@ import {
   TrendingUp,
   Calendar,
   CheckCircle,
-  Clock
+  Clock,
+  Globe,
+  Building
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {

@@ -9,7 +9,7 @@ import {
   Mail, 
   MapPin,
   Building,
-  User,
+  Globe,
   Calendar,
   Filter
 } from 'lucide-react';
@@ -17,7 +17,7 @@ import {
 const ClientsPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'Tous' | 'Particulier' | 'Entreprise'>('Tous');
+  const [filterType, setFilterType] = useState<'Tous' | 'National' | 'International'>('Tous');
   const [showAddForm, setShowAddForm] = useState(false);
 
   const filteredClients = clients.filter(client => {
@@ -69,8 +69,8 @@ const ClientsPage: React.FC = () => {
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="Tous">Tous les types</option>
-              <option value="Particulier">Particuliers</option>
-              <option value="Entreprise">Entreprises</option>
+              <option value="National">Clients Nationaux</option>
+              <option value="International">Clients Internationaux</option>
             </select>
           </div>
         </div>
@@ -90,23 +90,23 @@ const ClientsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Entreprises</p>
+              <p className="text-sm font-medium text-gray-600">Clients Nationaux</p>
               <p className="text-2xl font-bold text-green-600">
-                {clients.filter(c => c.typeClient === 'Entreprise').length}
+                {clients.filter(c => c.typeClient === 'National').length}
               </p>
             </div>
-            <Building className="h-8 w-8 text-green-500" />
+            <Globe className="h-8 w-8 text-green-500" />
           </div>
         </div>
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Particuliers</p>
+              <p className="text-sm font-medium text-gray-600">Clients Internationaux</p>
               <p className="text-2xl font-bold text-purple-600">
-                {clients.filter(c => c.typeClient === 'Particulier').length}
+                {clients.filter(c => c.typeClient === 'International').length}
               </p>
             </div>
-            <User className="h-8 w-8 text-purple-500" />
+            <Building className="h-8 w-8 text-purple-500" />
           </div>
         </div>
       </div>
@@ -125,14 +125,14 @@ const ClientsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className={`p-3 rounded-full ${
-                    client.typeClient === 'Entreprise' 
+                    client.typeClient === 'National' 
                       ? 'bg-blue-100 text-blue-600' 
                       : 'bg-green-100 text-green-600'
                   }`}>
-                    {client.typeClient === 'Entreprise' ? (
-                      <Building className="h-6 w-6" />
+                    {client.typeClient === 'National' ? (
+                      <Globe className="h-6 w-6" />
                     ) : (
-                      <User className="h-6 w-6" />
+                      <Building className="h-6 w-6" />
                     )}
                   </div>
                   
@@ -140,7 +140,7 @@ const ClientsPage: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <h4 className="text-lg font-semibold text-gray-900">{client.nom}</h4>
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        client.typeClient === 'Entreprise'
+                        client.typeClient === 'National'
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-green-100 text-green-800'
                       }`}>

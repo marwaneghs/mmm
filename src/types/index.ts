@@ -4,7 +4,7 @@ export interface Client {
   email: string;
   telephone: string;
   adresse: string;
-  typeClient: 'Particulier' | 'Entreprise';
+  typeClient: 'National' | 'International';
   dateCreation: string;
   actif: boolean;
 }
