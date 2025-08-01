@@ -778,7 +778,8 @@ export const translations: Record<Language, Translation> = {
     copy: 'Nɣel',
     viewOn: 'Wali ɣef',
     language: 'Tutlayt'
-};
+  };
+}
 
 export class TranslationService {
   private static currentLanguage: Language = 'fr';
