@@ -93,17 +93,19 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 fade-in">
+    <div className="space-y-8 fade-in">
       {/* Welcome Section */}
-      <div className="modern-card p-6">
+      <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Bonjour, Cabinet d'Avocats 👋</h1>
-            <p className="text-gray-600">Voici un aperçu de votre activité aujourd'hui</p>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
+              Bonjour, Cabinet d'Avocats 👋
+            </h1>
+            <p className="text-slate-600 text-lg">Voici un aperçu de votre activité aujourd'hui</p>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-500">
+          <div className="flex items-center space-x-3 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-200">
             <Calendar className="h-4 w-4" />
-            <span>{new Date().toLocaleDateString('fr-FR', { 
+            <span className="text-sm font-medium text-slate-600">{new Date().toLocaleDateString('fr-FR', { 
               weekday: 'long', 
               year: 'numeric', 
               month: 'long', 
@@ -114,24 +116,24 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className={`stats-card ${stat.color} slide-up`} style={{ animationDelay: `${index * 0.1}s` }}>
+            <div key={index} className={`bg-white/90 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-105 ${stat.color} slide-up`} style={{ animationDelay: `${index * 0.1}s` }}>
               <div className="flex items-center justify-between mb-4">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <Icon className="h-5 w-5 text-gray-600" />
+                <div className="p-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-inner">
+                  <Icon className="h-6 w-6 text-blue-600" />
                 </div>
-                <button className="p-1 hover:bg-gray-100 rounded">
-                  <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                <button className="p-2 hover:bg-slate-100 rounded-xl transition-all">
+                  <MoreHorizontal className="h-4 w-4 text-slate-400" />
                 </button>
               </div>
               
               <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                <p className="text-sm font-semibold text-slate-600 uppercase tracking-wide">{stat.title}</p>
                 <div className="flex items-end justify-between">
-                  <span className="text-3xl font-bold text-gray-900">{stat.value}</span>
+                  <span className="text-4xl font-bold text-slate-900">{stat.value}</span>
                   <div className={`flex items-center space-x-1 text-sm ${
                     stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
                   }`}>
@@ -148,55 +150,57 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Financial Overview */}
-        <div className="lg:col-span-2 modern-card-elevated p-6">
+        <div className="lg:col-span-2 bg-white/90 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-bold text-gray-900">{t('financialOverview')}</h3>
-              <p className="text-sm text-gray-600">Suivi des revenus et paiements</p>
+              <h3 className="text-2xl font-bold text-slate-900">{t('financialOverview')}</h3>
+              <p className="text-slate-600 mt-1">Suivi des revenus et paiements</p>
             </div>
             <div className="flex items-center space-x-2">
-              <button className="btn-secondary text-sm py-2 px-3">
+              <button className="flex items-center space-x-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-slate-200">
                 <Calendar className="h-4 w-4 mr-2" />
-                Ce mois
+                <span className="text-sm font-medium">Ce mois</span>
               </button>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="text-center p-4 bg-blue-50 rounded-xl">
-              <div className="text-2xl font-bold text-blue-600 mb-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl border border-blue-200">
+              <div className="text-3xl font-bold text-blue-600 mb-2">
                 {(totalBudget / 1000).toFixed(0)}K
               </div>
-              <div className="text-sm text-gray-600">Budget Total</div>
+              <div className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Budget Total</div>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-xl">
-              <div className="text-2xl font-bold text-green-600 mb-1">
+            <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-2xl border border-green-200">
+              <div className="text-3xl font-bold text-green-600 mb-2">
                 {(totalPaye / 1000).toFixed(0)}K
               </div>
-              <div className="text-sm text-gray-600">Montant Perçu</div>
+              <div className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Montant Perçu</div>
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded-xl">
-              <div className="text-2xl font-bold text-orange-600 mb-1">
+            <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl border border-orange-200">
+              <div className="text-3xl font-bold text-orange-600 mb-2">
                 {((totalBudget - totalPaye) / 1000).toFixed(0)}K
               </div>
-              <div className="text-sm text-gray-600">Reste à Percevoir</div>
+              <div className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Reste à Percevoir</div>
             </div>
           </div>
           
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-600">Taux de recouvrement</span>
-              <span className="text-sm font-bold text-gray-900">{recoveryRate}%</span>
+              <span className="text-sm font-semibold text-slate-600 uppercase tracking-wide">Taux de recouvrement</span>
+              <span className="text-lg font-bold text-slate-900">{recoveryRate}%</span>
             </div>
-            <div className="progress-bar">
+            <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
               <div 
-                className="progress-fill" 
+                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out relative overflow-hidden" 
                 style={{ width: `${recoveryRate}%` }}
-              ></div>
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse"></div>
+              </div>
             </div>
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs text-slate-500 font-medium">
               <span>0%</span>
               <span>50%</span>
               <span>100%</span>
@@ -205,45 +209,45 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="modern-card-elevated p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Actions Rapides</h3>
-          <div className="space-y-3">
-            <button className="w-full btn-primary flex items-center justify-center">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
+          <h3 className="text-xl font-bold text-slate-900 mb-6">Actions Rapides</h3>
+          <div className="space-y-4">
+            <button className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-2xl transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl hover:-translate-y-1">
               <FileText className="h-4 w-4 mr-2" />
               Nouvelle Affaire
             </button>
-            <button className="w-full btn-secondary flex items-center justify-center">
+            <button className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-2xl transition-all duration-200 flex items-center justify-center border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md">
               <Users className="h-4 w-4 mr-2" />
               Ajouter Client
             </button>
-            <button className="w-full btn-secondary flex items-center justify-center">
+            <button className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-2xl transition-all duration-200 flex items-center justify-center border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md">
               <DollarSign className="h-4 w-4 mr-2" />
               Enregistrer Paiement
             </button>
           </div>
           
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h4 className="text-sm font-semibold text-gray-900 mb-3">Activité Récente</h4>
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <h4 className="text-lg font-semibold text-slate-900 mb-4">Activité Récente</h4>
             <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="flex-1 text-sm">
-                  <span className="text-gray-900">Paiement reçu</span>
-                  <span className="text-gray-500 block">Il y a 2h</span>
+              <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-xl border border-green-200">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="flex-1">
+                  <span className="text-slate-900 font-medium">Paiement reçu</span>
+                  <span className="text-slate-500 text-sm block">Il y a 2h</span>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="flex-1 text-sm">
-                  <span className="text-gray-900">Nouveau client ajouté</span>
-                  <span className="text-gray-500 block">Il y a 4h</span>
+              <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <div className="flex-1">
+                  <span className="text-slate-900 font-medium">Nouveau client ajouté</span>
+                  <span className="text-slate-500 text-sm block">Il y a 4h</span>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <div className="flex-1 text-sm">
-                  <span className="text-gray-900">Échéance approche</span>
-                  <span className="text-gray-500 block">Il y a 6h</span>
+              <div className="flex items-center space-x-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
+                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                <div className="flex-1">
+                  <span className="text-slate-900 font-medium">Échéance approche</span>
+                  <span className="text-slate-500 text-sm block">Il y a 6h</span>
                 </div>
               </div>
             </div>
@@ -252,12 +256,12 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Recent Cases and Upcoming Deadlines */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Cases */}
-        <div className="modern-card-elevated p-6">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">{t('recentCases')}</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+            <h3 className="text-xl font-bold text-slate-900">{t('recentCases')}</h3>
+            <button className="text-sm text-blue-600 hover:text-blue-800 font-semibold px-3 py-1 hover:bg-blue-50 rounded-lg transition-all">
               Voir tout
             </button>
           </div>
@@ -266,19 +270,19 @@ const Dashboard: React.FC = () => {
             {recentAffaires.map((affaire) => {
               const client = mockClients.find(c => c.id === affaire.clientId);
               return (
-                <div key={affaire.id} className="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div key={affaire.id} className="flex items-center space-x-4 p-4 hover:bg-slate-50 rounded-2xl transition-all duration-200 hover:shadow-md border border-transparent hover:border-slate-200">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center shadow-sm">
                     <FileText className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{affaire.titre}</h4>
-                    <p className="text-sm text-gray-500">{client?.nom}</p>
+                    <h4 className="font-semibold text-slate-900 truncate">{affaire.titre}</h4>
+                    <p className="text-sm text-slate-500 mt-1">{client?.nom}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`badge ${getStatutColor(affaire.statut)}`}>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatutColor(affaire.statut)}`}>
                       {affaire.statut}
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">{formatDate(affaire.dateCreation)}</p>
+                    <p className="text-xs text-slate-500 mt-2 font-medium">{formatDate(affaire.dateCreation)}</p>
                   </div>
                 </div>
               );
@@ -287,10 +291,10 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Upcoming Deadlines */}
-        <div className="modern-card-elevated p-6">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-xl">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-gray-900">{t('upcomingDeadlines')}</h3>
-            <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+            <h3 className="text-xl font-bold text-slate-900">{t('upcomingDeadlines')}</h3>
+            <button className="text-sm text-blue-600 hover:text-blue-800 font-semibold px-3 py-1 hover:bg-blue-50 rounded-lg transition-all">
               Voir tout
             </button>
           </div>
@@ -301,11 +305,11 @@ const Dashboard: React.FC = () => {
               const isUrgent = new Date(affaire.dateEcheance!) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
               
               return (
-                <div key={affaire.id} className={`flex items-center space-x-4 p-3 rounded-lg transition-colors ${
-                  isUrgent ? 'bg-red-50 border border-red-200' : 'hover:bg-gray-50'
+                <div key={affaire.id} className={`flex items-center space-x-4 p-4 rounded-2xl transition-all duration-200 ${
+                  isUrgent ? 'bg-red-50 border border-red-200 shadow-sm' : 'hover:bg-slate-50 hover:shadow-md border border-transparent hover:border-slate-200'
                 }`}>
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    isUrgent ? 'bg-red-100' : 'bg-orange-100'
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${
+                    isUrgent ? 'bg-gradient-to-br from-red-100 to-red-200' : 'bg-gradient-to-br from-orange-100 to-orange-200'
                   }`}>
                     {isUrgent ? (
                       <AlertCircle className="h-5 w-5 text-red-600" />
@@ -314,14 +318,14 @@ const Dashboard: React.FC = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{affaire.titre}</h4>
-                    <p className="text-sm text-gray-500">{client?.nom}</p>
+                    <h4 className="font-semibold text-slate-900 truncate">{affaire.titre}</h4>
+                    <p className="text-sm text-slate-500 mt-1">{client?.nom}</p>
                   </div>
                   <div className="text-right">
-                    <span className={`badge ${getPrioriteColor(affaire.priorite)}`}>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getPrioriteColor(affaire.priorite)}`}>
                       {affaire.priorite}
                     </span>
-                    <p className={`text-xs mt-1 ${isUrgent ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+                    <p className={`text-xs mt-2 font-medium ${isUrgent ? 'text-red-600' : 'text-slate-500'}`}>
                       {formatDate(affaire.dateEcheance!)}
                     </p>
                   </div>
