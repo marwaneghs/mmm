@@ -22,7 +22,13 @@ import {
 } from 'lucide-react';
 
 const OutilsPage: React.FC = () => {
-  const [ompicSearch, setOmpicSearch] = useState('');
+  const [searchType, setSearchType] = useState<'simple' | 'avancee'>('simple');
+  const [searchParams, setSearchParams] = useState<OMPICSearchParams>({
+    query: '',
+    type: 'marque',
+    typeRecherche: 'simple',
+    operateur: 'ET'
+  });
   const [justiceSearch, setJusticeSearch] = useState('');
   const [searchResults, setSearchResults] = useState<OMPICSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -30,30 +36,31 @@ const OutilsPage: React.FC = () => {
   const [selectedResult, setSelectedResult] = useState<OMPICSearchResult | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([
-    'TechnoSoft',
-    'M202411001',
-    'InnovaTech',
+    'TechnoSoft', 'M202411001', 'InnovaTech'
   ]);
 
-  const handleOmpicSearch = async (searchTerm: string) => {
-    if (searchTerm.trim()) {
+  const handleOmpicSearch = async () => {
+    const hasSearchCriteria = searchParams.query.trim() || 
+                             searchParams.numeroDepot?.trim() ||
+                             searchParams.nomMarque?.trim() ||
+                             searchParams.deposant?.trim();
+    
+    if (hasSearchCriteria) {
       setIsSearching(true);
       setSearchResults([]);
       setSearchTime(null);
       setSearchError(null);
       
       try {
-        const params: OMPICSearchParams = {
-          query: searchTerm,
-          type: 'marque'
-        };
-        
-        const response = await OMPICService.searchMarques(params);
+        const response = await OMPICService.searchMarques(searchParams);
         setSearchResults(response.results);
         setSearchTime(response.searchTime);
         
         // Add to recent searches
-        setRecentSearches(prev => [searchTerm, ...prev.filter(s => s !== searchTerm)].slice(0, 5));
+        const searchTerm = searchParams.query || searchParams.nomMarque || searchParams.numeroDepot || '';
+        if (searchTerm) {
+          setRecentSearches(prev => [searchTerm, ...prev.filter(s => s !== searchTerm)].slice(0, 5));
+        }
       } catch (error) {
         setSearchError('Erreur lors de la recherche. Veuillez réessayer.');
         console.error('Erreur lors de la recherche OMPIC:', error);
@@ -61,6 +68,21 @@ const OutilsPage: React.FC = () => {
         setIsSearching(false);
       }
     }
+  };
+
+  const resetForm = () => {
+    setSearchParams({
+      query: '',
+      type: 'marque',
+      typeRecherche: 'simple',
+      operateur: 'ET'
+    });
+    setSearchResults([]);
+    setSearchError(null);
+  };
+
+  const updateSearchParam = (key: keyof OMPICSearchParams, value: any) => {
+    setSearchParams(prev => ({ ...prev, [key]: value }));
   };
 
   const handleJusticeSearch = (searchTerm: string) => {
@@ -201,48 +223,282 @@ const OutilsPage: React.FC = () => {
       {/* Search Tools */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* OMPIC Search */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 lg:col-span-2">
           <div className="flex items-center space-x-3 mb-4">
             <div className="bg-blue-500 p-2 rounded-lg text-white">
               <Building className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Recherche OMPIC</h3>
-              <p className="text-sm text-gray-600">Marques, brevets et registre du commerce</p>
+              <h3 className="text-lg font-semibold text-gray-900">Recherche sur les Marques Nationales - OMPIC</h3>
+              <p className="text-sm text-gray-600">Formulaire officiel de recherche dans la base de données OMPIC</p>
             </div>
           </div>
           
-          <div className="space-y-4">
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Nom de marque, numéro de dépôt..."
-                value={ompicSearch}
-                onChange={(e) => setOmpicSearch(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                onKeyPress={(e) => e.key === 'Enter' && handleOmpicSearch(ompicSearch)}
-              />
-              <button
-                onClick={() => handleOmpicSearch(ompicSearch)}
-                disabled={isSearching}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-              >
-                {isSearching ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="h-4 w-4" />
-                )}
-                <span>{isSearching ? 'Recherche...' : 'Rechercher'}</span>
-              </button>
+          {/* Type de recherche */}
+          <div className="mb-6">
+            <div className="flex space-x-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="searchType"
+                  value="simple"
+                  checked={searchType === 'simple'}
+                  onChange={(e) => {
+                    setSearchType('simple');
+                    updateSearchParam('typeRecherche', 'simple');
+                  }}
+                  className="mr-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Recherche simple</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="searchType"
+                  value="avancee"
+                  checked={searchType === 'avancee'}
+                  onChange={(e) => {
+                    setSearchType('avancee');
+                    updateSearchParam('typeRecherche', 'avancee');
+                  }}
+                  className="mr-2"
+                />
+                <span className="text-sm font-medium text-gray-700">Recherche avancée</span>
+              </label>
             </div>
+          </div>
+
+          {/* Formulaire de recherche */}
+          <div className="space-y-6">
+            {searchType === 'simple' ? (
+              /* Recherche Simple */
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Terme de recherche
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nom de marque, numéro de dépôt, déposant..."
+                    value={searchParams.query}
+                    onChange={(e) => updateSearchParam('query', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onKeyPress={(e) => e.key === 'Enter' && handleOmpicSearch()}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Recherche Avancée */
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Numéro de dépôt
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: M202411001"
+                      value={searchParams.numeroDepot || ''}
+                      onChange={(e) => updateSearchParam('numeroDepot', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nom de la marque
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: TechnoSoft"
+                      value={searchParams.nomMarque || ''}
+                      onChange={(e) => updateSearchParam('nomMarque', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Déposant
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: SARL TechnoMaroc"
+                      value={searchParams.deposant || ''}
+                      onChange={(e) => updateSearchParam('deposant', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mandataire
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nom du mandataire"
+                      value={searchParams.mandataire || ''}
+                      onChange={(e) => updateSearchParam('mandataire', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Numéro d'enregistrement
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Numéro d'enregistrement"
+                      value={searchParams.numeroEnregistrement || ''}
+                      onChange={(e) => updateSearchParam('numeroEnregistrement', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Numéro de publication
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Numéro de publication"
+                      value={searchParams.numeroPublication || ''}
+                      onChange={(e) => updateSearchParam('numeroPublication', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Classe de Nice
+                    </label>
+                    <select
+                      value={searchParams.classeNice || ''}
+                      onChange={(e) => updateSearchParam('classeNice', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Toutes les classes</option>
+                      {Array.from({length: 45}, (_, i) => i + 1).map(num => (
+                        <option key={num} value={num.toString().padStart(2, '0')}>
+                          Classe {num.toString().padStart(2, '0')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Statut
+                    </label>
+                    <select
+                      value={searchParams.statut || ''}
+                      onChange={(e) => updateSearchParam('statut', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Tous les statuts</option>
+                      <option value="En cours">En cours d'examen</option>
+                      <option value="Enregistrée">Enregistrée</option>
+                      <option value="Rejetée">Rejetée</option>
+                      <option value="Expirée">Expirée</option>
+                      <option value="Opposée">Opposée</option>
+                      <option value="Radiée">Radiée</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Produits et services
+                  </label>
+                  <textarea
+                    placeholder="Description des produits et services"
+                    value={searchParams.produitService || ''}
+                    onChange={(e) => updateSearchParam('produitService', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de début
+                    </label>
+                    <input
+                      type="date"
+                      value={searchParams.dateDebut || ''}
+                      onChange={(e) => updateSearchParam('dateDebut', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date de fin
+                    </label>
+                    <input
+                      type="date"
+                      value={searchParams.dateFin || ''}
+                      onChange={(e) => updateSearchParam('dateFin', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Opérateur logique
+                  </label>
+                  <div className="flex space-x-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="operateur"
+                        value="ET"
+                        checked={searchParams.operateur === 'ET'}
+                        onChange={(e) => updateSearchParam('operateur', 'ET')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-700">ET (tous les critères)</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="operateur"
+                        value="OU"
+                        checked={searchParams.operateur === 'OU'}
+                        onChange={(e) => updateSearchParam('operateur', 'OU')}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-700">OU (au moins un critère)</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
             
-            <div className="flex items-center justify-between">
+            {/* Boutons d'action */}
+            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleOmpicSearch}
+                  disabled={isSearching}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                >
+                  {isSearching ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4" />
+                  )}
+                  <span>{isSearching ? 'Recherche en cours...' : 'Rechercher'}</span>
+                </button>
+                <button
+                  onClick={resetForm}
+                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                >
+                  <span>Réinitialiser</span>
+                </button>
+              </div>
+              
               <button
-                onClick={() => window.open('http://www.ompic.ma/fr', '_blank')}
+                onClick={() => window.open('http://www.ompic.ma/fr/content/recherche-sur-les-marques-nationales', '_blank')}
                 className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
               >
                 <Globe className="h-4 w-4" />
-                <span>Accéder au site OMPIC</span>
+                <span>Site officiel OMPIC</span>
                 <ExternalLink className="h-3 w-3" />
               </button>
             </div>
@@ -250,7 +506,7 @@ const OutilsPage: React.FC = () => {
         </div>
 
         {/* Justice Search */}
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-6 lg:col-span-1">
           <div className="flex items-center space-x-3 mb-4">
             <div className="bg-purple-500 p-2 rounded-lg text-white">
               <Scale className="h-5 w-5" />
@@ -436,8 +692,10 @@ const OutilsPage: React.FC = () => {
                 key={index}
                 className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm flex items-center space-x-2 transition-colors"
                 onClick={() => {
-                  setOmpicSearch(search);
-                  handleOmpicSearch(search);
+                  updateSearchParam('query', search);
+                  if (searchType === 'avancee') {
+                    updateSearchParam('nomMarque', search);
+                  }
                 }}
               >
                 <span>{search}</span>
@@ -460,9 +718,7 @@ const OutilsPage: React.FC = () => {
                 onClick={() => setSelectedResult(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                ✕
               </button>
             </div>
             

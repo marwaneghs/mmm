@@ -153,24 +153,69 @@ export class OMPICService {
       }
     ];
 
-    const query = params.query.toLowerCase();
+    let filteredResults = mockDatabase;
     
-    let filteredResults = mockDatabase.filter(result => {
-      const matchesQuery = result.nomMarque.toLowerCase().includes(query) ||
-                          result.deposant.toLowerCase().includes(query) ||
-                          result.numeroDepot.toLowerCase().includes(query) ||
-                          result.description.toLowerCase().includes(query);
+    // Filtrage basé sur les paramètres de recherche
+    if (params.typeRecherche === 'simple' && params.query) {
+      const query = params.query.toLowerCase();
+      filteredResults = filteredResults.filter(result => {
+        return result.nomMarque.toLowerCase().includes(query) ||
+               result.deposant.toLowerCase().includes(query) ||
+               result.numeroDepot.toLowerCase().includes(query) ||
+               result.description.toLowerCase().includes(query);
+      });
+    } else if (params.typeRecherche === 'avancee') {
+      filteredResults = filteredResults.filter(result => {
+        let matches = true;
+        
+        if (params.numeroDepot) {
+          matches = matches && result.numeroDepot.toLowerCase().includes(params.numeroDepot.toLowerCase());
+        }
+        
+        if (params.nomMarque) {
+          matches = matches && result.nomMarque.toLowerCase().includes(params.nomMarque.toLowerCase());
+        }
+        
+        if (params.deposant) {
+          matches = matches && result.deposant.toLowerCase().includes(params.deposant.toLowerCase());
+        }
+        
+        if (params.classeNice) {
+          matches = matches && result.classes.includes(params.classeNice);
+        }
+        
+        if (params.produitService) {
+          matches = matches && result.description.toLowerCase().includes(params.produitService.toLowerCase());
+        }
+        
+        return matches;
+      });
+    }
+    
+    // Filtrage par statut
+    if (params.statut) {
+      filteredResults = filteredResults.filter(result => result.statut === params.statut);
+    }
+    
+    // Filtrage par dates
+    if (params.dateDebut) {
+      filteredResults = filteredResults.filter(result => 
+        new Date(result.dateDepot) >= new Date(params.dateDebut!)
+      );
+    }
+    
+    if (params.dateFin) {
+      filteredResults = filteredResults.filter(result => 
+        new Date(result.dateDepot) <= new Date(params.dateFin!)
+      );
+    }
       
-      const matchesStatut = !params.statut || params.statut === 'Tous' || result.statut === params.statut;
-      
-      return matchesQuery && matchesStatut;
-    });
-
-    // Si aucun résultat exact, on fait une recherche plus large
-    if (filteredResults.length === 0 && query.length > 2) {
+    // Si aucun résultat et recherche simple, faire une recherche plus large
+    if (filteredResults.length === 0 && params.typeRecherche === 'simple' && params.query && params.query.length > 2) {
+      const partialQuery = params.query.substring(0, 3).toLowerCase();
       filteredResults = mockDatabase.filter(result => {
-        return result.nomMarque.toLowerCase().includes(query.substring(0, 3)) ||
-               result.deposant.toLowerCase().includes(query.substring(0, 3));
+        return result.nomMarque.toLowerCase().includes(partialQuery) ||
+               result.deposant.toLowerCase().includes(partialQuery);
       });
     }
 

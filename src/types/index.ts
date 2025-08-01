@@ -52,8 +52,18 @@ export interface OMPICSearchResult {
 
 export interface OMPICSearchParams {
   query: string;
-  type: 'marque' | 'brevet' | 'design';
+  type: 'marque' | 'brevet' | 'design' | 'modele';
+  numeroDepot?: string;
+  nomMarque?: string;
+  deposant?: string;
+  mandataire?: string;
+  numeroEnregistrement?: string;
+  numeroPublication?: string;
+  classeNice?: string;
+  produitService?: string;
   statut?: string;
   dateDebut?: string;
   dateFin?: string;
+  typeRecherche: 'simple' | 'avancee';
+  operateur?: 'ET' | 'OU';
 }
