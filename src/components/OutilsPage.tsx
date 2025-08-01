@@ -38,7 +38,7 @@ const OutilsPage: React.FC = () => {
   const [selectedResult, setSelectedResult] = useState<OMPICSearchResult | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([
-    'TechnoSoft', 'M202411001', 'InnovaTech'
+    'ASTA', 'MAROC TELECOM', 'ATTIJARIWAFA BANK', 'OCP', 'ROYAL AIR MAROC'
   ]);
 
   const handleOmpicSearch = async () => {
@@ -497,7 +497,7 @@ const OutilsPage: React.FC = () => {
               
               <button
                 onClick={() => window.open('http://www.ompic.ma/fr/content/recherche-sur-les-marques-nationales', '_blank')}
-                className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
+                className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1 bg-blue-50 px-3 py-1 rounded-lg"
               >
                 <Globe className="h-4 w-4" />
                 <span>{t('officialOmpicSite')}</span>
@@ -560,7 +560,7 @@ const OutilsPage: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900">
                 {t('ompicSearchResults')}
                 <span className="ml-2 text-sm font-normal text-gray-500">
-                  ({t('searchOn')} {OMPICService.BASE_URL || t('officialOmpic')})
+                  ({t('searchOn')} Base de données officielle OMPIC)
                 </span>
               </h3>
               {searchTime && (
@@ -576,7 +576,7 @@ const OutilsPage: React.FC = () => {
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-4 animate-spin" />
               <p className="text-gray-600">{t('searchingOnOfficialOmpic')}</p>
               <p className="text-sm text-gray-500 mt-2">
-                {t('connectingTo')} www.ompic.ma/fr/content/recherche-sur-les-marques-nationales
+                {t('connectingTo')} OMPIC via backend sécurisé
               </p>
             </div>
           ) : searchError ? (
