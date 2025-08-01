@@ -595,6 +595,7 @@ export const translations: Record<Language, Translation> = {
     viewOn: 'Ver en',
     language: 'Idioma'
   }
+  },
 
   ber: {
     // Navigation
