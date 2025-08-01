@@ -37,6 +37,12 @@ export interface Paiement {
 
 export type NavigationPage = 'dashboard' | 'clients' | 'affaires' | 'finances' | 'outils';
 
+export type Language = 'fr' | 'ar' | 'en' | 'es';
+
+export interface Translation {
+  [key: string]: string | Translation;
+}
+
 export interface OMPICSearchResult {
   id: string;
   numeroDepot: string;

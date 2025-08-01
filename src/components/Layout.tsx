@@ -1,5 +1,7 @@
 import React from 'react';
 import { NavigationPage } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageSelector from './LanguageSelector';
 import { 
   LayoutDashboard, 
   Users, 
@@ -17,12 +19,14 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, children }) => {
+  const { t } = useTranslation();
+  
   const navigationItems = [
-    { id: 'dashboard' as NavigationPage, label: 'Tableau de bord', icon: LayoutDashboard },
-    { id: 'clients' as NavigationPage, label: 'Clients', icon: Users },
-    { id: 'affaires' as NavigationPage, label: 'Affaires', icon: FileText },
-    { id: 'finances' as NavigationPage, label: 'Finances', icon: Calculator },
-    { id: 'outils' as NavigationPage, label: 'Outils externes', icon: ExternalLink },
+    { id: 'dashboard' as NavigationPage, label: t('dashboard'), icon: LayoutDashboard },
+    { id: 'clients' as NavigationPage, label: t('clients'), icon: Users },
+    { id: 'affaires' as NavigationPage, label: t('affaires'), icon: FileText },
+    { id: 'finances' as NavigationPage, label: t('finances'), icon: Calculator },
+    { id: 'outils' as NavigationPage, label: t('outils'), icon: ExternalLink },
   ];
 
   return (
@@ -35,8 +39,8 @@ const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, children }) =>
               <Scale className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Cabinet IP</h1>
-              <p className="text-sm text-gray-500">Propriété Industrielle</p>
+              <h1 className="text-xl font-bold text-gray-900">{t('appTitle')}</h1>
+              <p className="text-sm text-gray-500">{t('appSubtitle')}</p>
             </div>
           </div>
         </div>
@@ -72,9 +76,10 @@ const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, children }) =>
               <h2 className="text-2xl font-semibold text-gray-900">
                 {navigationItems.find(item => item.id === currentPage)?.label}
               </h2>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <LanguageSelector />
                 <Building2 className="h-5 w-5 text-gray-400" />
-                <span className="text-sm text-gray-600">Cabinet d'Avocats - Propriété Industrielle</span>
+                <span className="text-sm text-gray-600 hidden lg:inline">{t('headerSubtitle')}</span>
               </div>
             </div>
           </div>

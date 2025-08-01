@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from './hooks/useTranslation';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import ClientsPage from './components/ClientsPage';
