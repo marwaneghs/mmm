@@ -11,7 +11,8 @@ import {
   Building,
   Globe,
   Calendar,
-  Filter
+  Filter,
+  User
 } from 'lucide-react';
 
 const ClientsPage: React.FC = () => {
