@@ -596,7 +596,7 @@ export const translations: Record<Language, Translation> = {
     language: 'Idioma'
   }
   },
-  
+
   ber: {
     // Navigation
     dashboard: 'Tafelwit n usenqed',
