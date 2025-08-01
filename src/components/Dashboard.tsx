@@ -1,5 +1,6 @@
 import React from 'react';
 import { mockClients, mockAffaires, mockPaiements } from '../data/mockData';
+import { useTranslation } from '../hooks/useTranslation';
 import { 
   Users, 
   FileText, 
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
+  const { t } = useTranslation();
   const affairesEnCours = mockAffaires.filter(a => a.statut === 'En cours').length;
   const affairesUrgentes = mockAffaires.filter(a => a.priorite === 'Urgente').length;
   const totalBudget = mockAffaires.reduce((sum, a) => sum + a.budget, 0);
@@ -22,7 +24,7 @@ const Dashboard: React.FC = () => {
 
   const stats = [
     {
-      title: 'Clients actifs',
+      title: t('activeClients'),
       value: mockClients.filter(c => c.actif).length,
       icon: Users,
       color: 'bg-blue-500',
@@ -30,7 +32,7 @@ const Dashboard: React.FC = () => {
       bgColor: 'bg-blue-50',
     },
     {
-      title: 'Affaires en cours',
+      title: t('ongoingCases'),
       value: affairesEnCours,
       icon: FileText,
       color: 'bg-green-500',
@@ -38,7 +40,7 @@ const Dashboard: React.FC = () => {
       bgColor: 'bg-green-50',
     },
     {
-      title: 'Affaires urgentes',
+      title: t('urgentCases'),
       value: affairesUrgentes,
       icon: AlertCircle,
       color: 'bg-red-500',
@@ -46,7 +48,7 @@ const Dashboard: React.FC = () => {
       bgColor: 'bg-red-50',
     },
     {
-      title: 'CA Total',
+      title: t('totalRevenue'),
       value: `${totalBudget.toLocaleString()} MAD`,
       icon: DollarSign,
       color: 'bg-purple-500',
@@ -112,21 +114,21 @@ const Dashboard: React.FC = () => {
         {/* Financial Overview */}
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Aperçu financier</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('financialOverview')}</h3>
             <TrendingUp className="h-5 w-5 text-green-500" />
           </div>
           
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Budget total</span>
+              <span className="text-sm text-gray-600">{t('totalBudget')}</span>
               <span className="font-semibold text-gray-900">{totalBudget.toLocaleString()} MAD</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Montant perçu</span>
+              <span className="text-sm text-gray-600">{t('amountReceived')}</span>
               <span className="font-semibold text-green-600">{totalPaye.toLocaleString()} MAD</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Reste à percevoir</span>
+              <span className="text-sm text-gray-600">{t('remainingAmount')}</span>
               <span className="font-semibold text-orange-600">{(totalBudget - totalPaye).toLocaleString()} MAD</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
@@ -136,7 +138,7 @@ const Dashboard: React.FC = () => {
               ></div>
             </div>
             <p className="text-xs text-gray-500 text-center">
-              Taux de recouvrement: {Math.round((totalPaye / totalBudget) * 100)}%
+              {t('recoveryRate')}: {Math.round((totalPaye / totalBudget) * 100)}%
             </p>
           </div>
         </div>
@@ -144,7 +146,7 @@ const Dashboard: React.FC = () => {
         {/* Recent Affairs */}
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Affaires récentes</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('recentCases')}</h3>
             <FileText className="h-5 w-5 text-blue-500" />
           </div>
           
@@ -176,7 +178,7 @@ const Dashboard: React.FC = () => {
       {/* Upcoming Deadlines */}
       <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Prochaines échéances</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('upcomingDeadlines')}</h3>
           <Calendar className="h-5 w-5 text-orange-500" />
         </div>
         
@@ -200,7 +202,7 @@ const Dashboard: React.FC = () => {
                         <Clock className="h-4 w-4 text-gray-400" />
                       )}
                       <span className={`text-sm font-medium ${isUrgent ? 'text-red-600' : 'text-gray-900'}`}>
-                        {formatDate(affaire.dateEcheance!)}
+                        {t('deadline')}: {formatDate(affaire.dateEcheance!)}
                       </span>
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full mt-1 inline-block ${getPrioriteColor(affaire.priorite)}`}>

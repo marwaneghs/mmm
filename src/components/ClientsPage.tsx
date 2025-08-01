@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { mockClients } from '../data/mockData';
 import { Client } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 import { 
   Plus, 
   Search, 
@@ -16,9 +17,10 @@ import {
 } from 'lucide-react';
 
 const ClientsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'Tous' | 'National' | 'International'>('Tous');
+  const [filterType, setFilterType] = useState<string>('Tous');
   const [showAddForm, setShowAddForm] = useState(false);
 
   const filteredClients = clients.filter(client => {
@@ -37,15 +39,15 @@ const ClientsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestion des Clients</h2>
-          <p className="text-gray-600">Gérez votre portefeuille client</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('clientManagement')}</h2>
+          <p className="text-gray-600">{t('manageClientPortfolio')}</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
         >
           <Plus className="h-4 w-4" />
-          <span>Nouveau Client</span>
+          <span>{t('newClient')}</span>
         </button>
       </div>
 
@@ -56,7 +58,7 @@ const ClientsPage: React.FC = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <input
               type="text"
-              placeholder="Rechercher par nom ou email..."
+              placeholder={t('searchByNameOrEmail')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -69,9 +71,9 @@ const ClientsPage: React.FC = () => {
               onChange={(e) => setFilterType(e.target.value as any)}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="Tous">Tous les types</option>
-              <option value="National">Clients Nationaux</option>
-              <option value="International">Clients Internationaux</option>
+              <option value="Tous">{t('allTypes')}</option>
+              <option value="National">{t('nationalClients')}</option>
+              <option value="International">{t('internationalClients')}</option>
             </select>
           </div>
         </div>
@@ -82,7 +84,7 @@ const ClientsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Clients</p>
+              <p className="text-sm font-medium text-gray-600">{t('totalClients')}</p>
               <p className="text-2xl font-bold text-blue-600">{clients.length}</p>
             </div>
             <User className="h-8 w-8 text-blue-500" />
@@ -91,7 +93,7 @@ const ClientsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Clients Nationaux</p>
+              <p className="text-sm font-medium text-gray-600">{t('nationalClients')}</p>
               <p className="text-2xl font-bold text-green-600">
                 {clients.filter(c => c.typeClient === 'National').length}
               </p>
@@ -102,7 +104,7 @@ const ClientsPage: React.FC = () => {
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Clients Internationaux</p>
+              <p className="text-sm font-medium text-gray-600">{t('internationalClients')}</p>
               <p className="text-2xl font-bold text-purple-600">
                 {clients.filter(c => c.typeClient === 'International').length}
               </p>
@@ -116,7 +118,7 @@ const ClientsPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
-            Liste des Clients ({filteredClients.length})
+            {t('clientsList')} ({filteredClients.length})
           </h3>
         </div>
         
@@ -145,11 +147,11 @@ const ClientsPage: React.FC = () => {
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-green-100 text-green-800'
                       }`}>
-                        {client.typeClient}
+                        {client.typeClient === 'National' ? t('national') : t('international')}
                       </span>
                       {client.actif && (
                         <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-                          Actif
+                          {t('active')}
                         </span>
                       )}
                     </div>
@@ -171,7 +173,7 @@ const ClientsPage: React.FC = () => {
                     
                     <div className="mt-2 flex items-center space-x-2 text-sm text-gray-500">
                       <Calendar className="h-4 w-4" />
-                      <span>Client depuis le {formatDate(client.dateCreation)}</span>
+                      <span>{t('clientSince')} {formatDate(client.dateCreation)}</span>
                     </div>
                   </div>
                 </div>
@@ -187,8 +189,8 @@ const ClientsPage: React.FC = () => {
         {filteredClients.length === 0 && (
           <div className="p-12 text-center">
             <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun client trouvé</h3>
-            <p className="text-gray-500">Essayez de modifier vos critères de recherche</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noResults')}</h3>
+            <p className="text-gray-500">{t('tryModifyingSearchCriteria')}</p>
           </div>
         )}
       </div>

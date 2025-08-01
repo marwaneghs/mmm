@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { OMPICService } from '../services/ompicService';
 import { OMPICSearchResult, OMPICSearchParams } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 import { 
   ExternalLink, 
   Search, 
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 
 const OutilsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchType, setSearchType] = useState<'simple' | 'avancee'>('simple');
   const [searchParams, setSearchParams] = useState<OMPICSearchParams>({
     query: '',
@@ -110,29 +112,29 @@ const OutilsPage: React.FC = () => {
   };
   const quickActions = [
     {
-      title: 'Recherche Marques OMPIC',
-      description: 'Rechercher dans la base de données des marques déposées',
+      title: t('ompicTrademarkSearch'),
+      description: t('searchTrademarkDatabase'),
       icon: Search,
       color: 'bg-blue-500',
       action: () => window.open('http://www.ompic.ma/fr/recherche-marques', '_blank'),
     },
     {
-      title: 'Dépôt en ligne OMPIC',
-      description: 'Accéder au système de dépôt électronique',
+      title: t('onlineDeposit'),
+      description: t('accessElectronicDeposit'),
       icon: FileText,
       color: 'bg-green-500',
       action: () => window.open('http://www.ompic.ma/fr/depot-en-ligne', '_blank'),
     },
     {
-      title: 'État des procédures',
-      description: 'Consulter l\'état d\'avancement des dossiers',
+      title: t('procedureStatus'),
+      description: t('consultProcedureStatus'),
       icon: Eye,
       color: 'bg-purple-500',
       action: () => window.open('http://www.ompic.ma/fr/etat-procedures', '_blank'),
     },
     {
-      title: 'Tribunaux Commerce',
-      description: 'Accéder aux tribunaux de première instance',
+      title: t('commercialCourts'),
+      description: t('accessFirstInstanceCourts'),
       icon: Scale,
       color: 'bg-orange-500',
       action: () => window.open('https://justice.gov.ma/tribunaux-de-premiere-instance/', '_blank'),
@@ -192,8 +194,8 @@ const OutilsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Outils Externes</h2>
-          <p className="text-gray-600">Intégration avec OMPIC et portails Justice</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('externalTools')}</h2>
+          <p className="text-gray-600">{t('ompicJusticeIntegration')}</p>
         </div>
       </div>
 
@@ -229,8 +231,8 @@ const OutilsPage: React.FC = () => {
               <Building className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Recherche sur les Marques Nationales - OMPIC</h3>
-              <p className="text-sm text-gray-600">Formulaire officiel de recherche dans la base de données OMPIC</p>
+              <h3 className="text-lg font-semibold text-gray-900">{t('nationalTrademarkSearch')}</h3>
+              <p className="text-sm text-gray-600">{t('officialOmpicSearch')}</p>
             </div>
           </div>
           
@@ -249,7 +251,7 @@ const OutilsPage: React.FC = () => {
                   }}
                   className="mr-2"
                 />
-                <span className="text-sm font-medium text-gray-700">Recherche simple</span>
+                <span className="text-sm font-medium text-gray-700">{t('simpleSearch')}</span>
               </label>
               <label className="flex items-center">
                 <input
@@ -263,7 +265,7 @@ const OutilsPage: React.FC = () => {
                   }}
                   className="mr-2"
                 />
-                <span className="text-sm font-medium text-gray-700">Recherche avancée</span>
+                <span className="text-sm font-medium text-gray-700">{t('advancedSearch')}</span>
               </label>
             </div>
           </div>
@@ -275,11 +277,11 @@ const OutilsPage: React.FC = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Terme de recherche
+                    {t('searchTerm')}
                   </label>
                   <input
                     type="text"
-                    placeholder="Nom de marque, numéro de dépôt, déposant..."
+                    placeholder={t('searchPlaceholder')}
                     value={searchParams.query}
                     onChange={(e) => updateSearchParam('query', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -293,7 +295,7 @@ const OutilsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Numéro de dépôt
+                      {t('depositNumber')}
                     </label>
                     <input
                       type="text"
@@ -305,7 +307,7 @@ const OutilsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nom de la marque
+                      {t('trademarkName')}
                     </label>
                     <input
                       type="text"
@@ -317,7 +319,7 @@ const OutilsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Déposant
+                      {t('applicant')}
                     </label>
                     <input
                       type="text"
@@ -329,11 +331,11 @@ const OutilsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mandataire
+                      {t('representative')}
                     </label>
                     <input
                       type="text"
-                      placeholder="Nom du mandataire"
+                      placeholder={t('representativeName')}
                       value={searchParams.mandataire || ''}
                       onChange={(e) => updateSearchParam('mandataire', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -341,11 +343,11 @@ const OutilsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Numéro d'enregistrement
+                      {t('registrationNumber')}
                     </label>
                     <input
                       type="text"
-                      placeholder="Numéro d'enregistrement"
+                      placeholder={t('registrationNumber')}
                       value={searchParams.numeroEnregistrement || ''}
                       onChange={(e) => updateSearchParam('numeroEnregistrement', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -353,11 +355,11 @@ const OutilsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Numéro de publication
+                      {t('publicationNumber')}
                     </label>
                     <input
                       type="text"
-                      placeholder="Numéro de publication"
+                      placeholder={t('publicationNumber')}
                       value={searchParams.numeroPublication || ''}
                       onChange={(e) => updateSearchParam('numeroPublication', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -365,47 +367,47 @@ const OutilsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Classe de Nice
+                      {t('niceClass')}
                     </label>
                     <select
                       value={searchParams.classeNice || ''}
                       onChange={(e) => updateSearchParam('classeNice', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Toutes les classes</option>
+                      <option value="">{t('allClasses')}</option>
                       {Array.from({length: 45}, (_, i) => i + 1).map(num => (
                         <option key={num} value={num.toString().padStart(2, '0')}>
-                          Classe {num.toString().padStart(2, '0')}
+                          {t('class')} {num.toString().padStart(2, '0')}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Statut
+                      {t('status')}
                     </label>
                     <select
                       value={searchParams.statut || ''}
                       onChange={(e) => updateSearchParam('statut', e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Tous les statuts</option>
-                      <option value="En cours">En cours d'examen</option>
-                      <option value="Enregistrée">Enregistrée</option>
-                      <option value="Rejetée">Rejetée</option>
-                      <option value="Expirée">Expirée</option>
-                      <option value="Opposée">Opposée</option>
-                      <option value="Radiée">Radiée</option>
+                      <option value="">{t('allStatuses')}</option>
+                      <option value="En cours">{t('underExamination')}</option>
+                      <option value="Enregistrée">{t('registered')}</option>
+                      <option value="Rejetée">{t('rejected')}</option>
+                      <option value="Expirée">{t('expired')}</option>
+                      <option value="Opposée">{t('opposed')}</option>
+                      <option value="Radiée">{t('cancelled')}</option>
                     </select>
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Produits et services
+                    {t('productsServices')}
                   </label>
                   <textarea
-                    placeholder="Description des produits et services"
+                    placeholder={t('productsServicesDescription')}
                     value={searchParams.produitService || ''}
                     onChange={(e) => updateSearchParam('produitService', e.target.value)}
                     rows={3}
@@ -416,7 +418,7 @@ const OutilsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de début
+                      {t('startDate')}
                     </label>
                     <input
                       type="date"
@@ -427,7 +429,7 @@ const OutilsPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de fin
+                      {t('endDate')}
                     </label>
                     <input
                       type="date"
@@ -440,7 +442,7 @@ const OutilsPage: React.FC = () => {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Opérateur logique
+                    {t('logicalOperator')}
                   </label>
                   <div className="flex space-x-4">
                     <label className="flex items-center">
@@ -452,7 +454,7 @@ const OutilsPage: React.FC = () => {
                         onChange={(e) => updateSearchParam('operateur', 'ET')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-gray-700">ET (tous les critères)</span>
+                      <span className="text-sm text-gray-700">{t('andOperator')}</span>
                     </label>
                     <label className="flex items-center">
                       <input
@@ -463,7 +465,7 @@ const OutilsPage: React.FC = () => {
                         onChange={(e) => updateSearchParam('operateur', 'OU')}
                         className="mr-2"
                       />
-                      <span className="text-sm text-gray-700">OU (au moins un critère)</span>
+                      <span className="text-sm text-gray-700">{t('orOperator')}</span>
                     </label>
                   </div>
                 </div>
@@ -483,13 +485,13 @@ const OutilsPage: React.FC = () => {
                   ) : (
                     <Search className="h-4 w-4" />
                   )}
-                  <span>{isSearching ? 'Recherche en cours...' : 'Rechercher'}</span>
+                  <span>{isSearching ? t('searching') : t('search')}</span>
                 </button>
                 <button
                   onClick={resetForm}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
                 >
-                  <span>Réinitialiser</span>
+                  <span>{t('reset')}</span>
                 </button>
               </div>
               
@@ -498,7 +500,7 @@ const OutilsPage: React.FC = () => {
                 className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
               >
                 <Globe className="h-4 w-4" />
-                <span>Site officiel OMPIC</span>
+                <span>{t('officialOmpicSite')}</span>
                 <ExternalLink className="h-3 w-3" />
               </button>
             </div>
@@ -512,8 +514,8 @@ const OutilsPage: React.FC = () => {
               <Scale className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Portail Justice</h3>
-              <p className="text-sm text-gray-600">Tribunaux et suivi des procédures</p>
+              <h3 className="text-lg font-semibold text-gray-900">{t('justicePortal')}</h3>
+              <p className="text-sm text-gray-600">{t('courtsAndProcedureTracking')}</p>
             </div>
           </div>
           
@@ -521,7 +523,7 @@ const OutilsPage: React.FC = () => {
             <div className="flex space-x-2">
               <input
                 type="text"
-                placeholder="Numéro d'affaire, référence tribunal..."
+                placeholder={t('caseNumberCourtReference')}
                 value={justiceSearch}
                 onChange={(e) => setJusticeSearch(e.target.value)}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -532,7 +534,7 @@ const OutilsPage: React.FC = () => {
                 className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
               >
                 <Search className="h-4 w-4" />
-                <span>Rechercher</span>
+                <span>{t('search')}</span>
               </button>
             </div>
             
@@ -542,7 +544,7 @@ const OutilsPage: React.FC = () => {
                 className="text-purple-600 hover:text-purple-800 text-sm flex items-center space-x-1"
               >
                 <Globe className="h-4 w-4" />
-                <span>Accéder au portail Justice</span>
+                <span>{t('accessJusticePortal')}</span>
                 <ExternalLink className="h-3 w-3" />
               </button>
             </div>
@@ -556,14 +558,14 @@ const OutilsPage: React.FC = () => {
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
-                Résultats de recherche OMPIC
+                {t('ompicSearchResults')}
                 <span className="ml-2 text-sm font-normal text-gray-500">
-                  (Recherche sur {OMPICService.BASE_URL || 'OMPIC officiel'})
+                  ({t('searchOn')} {OMPICService.BASE_URL || t('officialOmpic')})
                 </span>
               </h3>
               {searchTime && (
                 <span className="text-sm text-gray-500">
-                  {searchResults.length} résultat(s) en {searchTime}ms
+                  {searchResults.length} {t('results')} {t('in')} {searchTime}ms
                 </span>
               )}
             </div>
@@ -572,21 +574,21 @@ const OutilsPage: React.FC = () => {
           {isSearching ? (
             <div className="p-12 text-center">
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-600">Recherche en cours sur le site officiel OMPIC...</p>
+              <p className="text-gray-600">{t('searchingOnOfficialOmpic')}</p>
               <p className="text-sm text-gray-500 mt-2">
-                Connexion à www.ompic.ma/fr/content/recherche-sur-les-marques-nationales
+                {t('connectingTo')} www.ompic.ma/fr/content/recherche-sur-les-marques-nationales
               </p>
             </div>
           ) : searchError ? (
             <div className="p-12 text-center">
               <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Erreur de recherche</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('searchError')}</h3>
               <p className="text-gray-500 mb-4">{searchError}</p>
               <button
-                onClick={() => handleOmpicSearch(ompicSearch)}
+                onClick={() => handleOmpicSearch()}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
-                Réessayer
+                {t('retry')}
               </button>
             </div>
           ) : (
@@ -606,22 +608,22 @@ const OutilsPage: React.FC = () => {
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             <Hash className="h-4 w-4" />
-                            <span>N° Dépôt: {result.numeroDepot}</span>
+                            <span>{t('depositNumber')}: {result.numeroDepot}</span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <User className="h-4 w-4" />
-                            <span>Déposant: {result.deposant}</span>
+                            <span>{t('applicant')}: {result.deposant}</span>
                           </div>
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             <Calendar className="h-4 w-4" />
-                            <span>Dépôt: {formatDate(result.dateDepot)}</span>
+                            <span>{t('deposit')}: {formatDate(result.dateDepot)}</span>
                           </div>
                           {result.dateExpiration && (
                             <div className="flex items-center space-x-2">
                               <Calendar className="h-4 w-4" />
-                              <span>Expiration: {formatDate(result.dateExpiration)}</span>
+                              <span>{t('expiration')}: {formatDate(result.dateExpiration)}</span>
                             </div>
                           )}
                         </div>
@@ -629,7 +631,7 @@ const OutilsPage: React.FC = () => {
                       
                       <div className="flex items-center space-x-2 mb-2">
                         <Tag className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">Classes: </span>
+                        <span className="text-sm text-gray-600">{t('classes')}: </span>
                         {result.classes.map((classe, index) => (
                           <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
                             {classe}
@@ -649,14 +651,14 @@ const OutilsPage: React.FC = () => {
                       <button
                         onClick={() => setSelectedResult(result)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Voir les détails"
+                        title={t('viewDetails')}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => navigator.clipboard.writeText(result.numeroDepot)}
                         className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Copier le numéro"
+                        title={t('copyNumber')}
                       >
                         <Copy className="h-4 w-4" />
                       </button>
@@ -670,12 +672,12 @@ const OutilsPage: React.FC = () => {
           {!isSearching && searchResults.length === 0 && ompicSearch && (
             <div className="p-12 text-center">
               <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun résultat trouvé</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noResults')}</h3>
               <p className="text-gray-500">
-                Aucune marque trouvée pour "{ompicSearch}" sur le site officiel OMPIC
+                {t('noTrademarkFound')} "{searchParams.query}" {t('onOfficialOmpic')}
               </p>
               <p className="text-sm text-gray-400 mt-2">
-                Essayez avec un terme de recherche différent ou vérifiez l'orthographe
+                {t('tryDifferentSearchTerm')}
               </p>
             </div>
           )}
@@ -685,7 +687,7 @@ const OutilsPage: React.FC = () => {
       {/* Recent Searches */}
       {recentSearches.length > 0 && (
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recherches Récentes</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('recentSearches')}</h3>
           <div className="flex flex-wrap gap-2">
             {recentSearches.map((search, index) => (
               <button
@@ -712,7 +714,7 @@ const OutilsPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-xl font-semibold text-gray-900">
-                Détails de la marque
+                {t('trademarkDetails')}
               </h3>
               <button
                 onClick={() => setSelectedResult(null)}
@@ -734,7 +736,7 @@ const OutilsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Numéro de dépôt
+                      {t('depositNumber')}
                     </label>
                     <div className="flex items-center space-x-2">
                       <span className="text-lg font-mono text-gray-900">{selectedResult.numeroDepot}</span>
@@ -749,19 +751,19 @@ const OutilsPage: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Déposant
+                      {t('applicant')}
                     </label>
                     <p className="text-gray-900">{selectedResult.deposant}</p>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Classes
+                      {t('classes')}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {selectedResult.classes.map((classe, index) => (
                         <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                          Classe {classe}
+                          {t('class')} {classe}
                         </span>
                       ))}
                     </div>
@@ -771,7 +773,7 @@ const OutilsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date de dépôt
+                      {t('depositDate')}
                     </label>
                     <p className="text-gray-900">{formatDate(selectedResult.dateDepot)}</p>
                   </div>
@@ -779,7 +781,7 @@ const OutilsPage: React.FC = () => {
                   {selectedResult.dateExpiration && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Date d'expiration
+                        {t('expirationDate')}
                       </label>
                       <p className="text-gray-900">{formatDate(selectedResult.dateExpiration)}</p>
                     </div>
@@ -787,7 +789,7 @@ const OutilsPage: React.FC = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Statut
+                      {t('status')}
                     </label>
                     <span className={`px-3 py-1 text-sm rounded-full ${getStatutColor(selectedResult.statut)}`}>
                       {selectedResult.statut}
@@ -799,7 +801,7 @@ const OutilsPage: React.FC = () => {
               {selectedResult.description && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
+                    {t('description')}
                   </label>
                   <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
                     {selectedResult.description}
@@ -812,14 +814,14 @@ const OutilsPage: React.FC = () => {
                   onClick={() => setSelectedResult(null)}
                   className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
-                  Fermer
+                  {t('close')}
                 </button>
                 <button
                   onClick={() => window.open(`http://www.ompic.ma/fr/marque/${selectedResult.numeroDepot}`, '_blank')}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center space-x-2 transition-colors"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  <span>Voir sur OMPIC</span>
+                  <span>{t('viewOnOmpic')}</span>
                 </button>
               </div>
             </div>
@@ -830,7 +832,7 @@ const OutilsPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* OMPIC Services */}
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Services OMPIC</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('ompicServices')}</h3>
           <div className="space-y-3">
             {ompicServices.map((service, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -859,7 +861,7 @@ const OutilsPage: React.FC = () => {
 
         {/* Justice Services */}
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Services Justice</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('justiceServices')}</h3>
           <div className="space-y-3">
             {justiceServices.map((service, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">

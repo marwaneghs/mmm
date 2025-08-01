@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { mockAffaires, mockClients, mockPaiements } from '../data/mockData';
+import { useTranslation } from '../hooks/useTranslation';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -15,8 +16,9 @@ import {
 } from 'lucide-react';
 
 const FinancesPage: React.FC = () => {
-  const [filterPeriod, setFilterPeriod] = useState('Tous');
-  const [filterStatut, setFilterStatut] = useState('Tous');
+  const { t } = useTranslation();
+  const [filterPeriod, setFilterPeriod] = useState(t('allPeriods'));
+  const [filterStatut, setFilterStatut] = useState(t('allStatuses'));
 
   const totalBudget = mockAffaires.reduce((sum, a) => sum + a.budget, 0);
   const totalPaye = mockAffaires.reduce((sum, a) => sum + a.montantPaye, 0);
@@ -64,7 +66,7 @@ const FinancesPage: React.FC = () => {
 
   const stats = [
     {
-      title: 'Chiffre d\'affaires total',
+      title: t('totalTurnover'),
       value: `${totalBudget.toLocaleString()} MAD`,
       icon: DollarSign,
       color: 'bg-blue-500',
@@ -72,7 +74,7 @@ const FinancesPage: React.FC = () => {
       bgColor: 'bg-blue-50',
     },
     {
-      title: 'Montant perçu',
+      title: t('amountCollected'),
       value: `${totalPaye.toLocaleString()} MAD`,
       icon: TrendingUp,
       color: 'bg-green-500',
@@ -80,7 +82,7 @@ const FinancesPage: React.FC = () => {
       bgColor: 'bg-green-50',
     },
     {
-      title: 'Reste à percevoir',
+      title: t('remainingToCollect'),
       value: `${totalEnAttente.toLocaleString()} MAD`,
       icon: TrendingDown,
       color: 'bg-orange-500',
@@ -88,7 +90,7 @@ const FinancesPage: React.FC = () => {
       bgColor: 'bg-orange-50',
     },
     {
-      title: 'Paiements en attente',
+      title: t('pendingPayments'),
       value: paymentsEnAttente.length,
       icon: Clock,
       color: 'bg-yellow-500',
@@ -102,17 +104,17 @@ const FinancesPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Gestion Financière</h2>
-          <p className="text-gray-600">Suivi des budgets, paiements et encaissements</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('financialManagement')}</h2>
+          <p className="text-gray-600">{t('budgetPaymentTracking')}</p>
         </div>
         <div className="flex space-x-2">
           <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
             <Plus className="h-4 w-4" />
-            <span>Nouveau Paiement</span>
+            <span>{t('newPayment')}</span>
           </button>
           <button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
             <Download className="h-4 w-4" />
-            <span>Exporter</span>
+            <span>{t('export')}</span>
           </button>
         </div>
       </div>
@@ -142,7 +144,7 @@ const FinancesPage: React.FC = () => {
         {/* Recouvrement Progress */}
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Taux de Recouvrement</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('recoveryRate')}</h3>
             <TrendingUp className="h-5 w-5 text-green-500" />
           </div>
           
@@ -161,11 +163,11 @@ const FinancesPage: React.FC = () => {
             
             <div className="grid grid-cols-2 gap-4 text-center">
               <div className="p-3 bg-green-50 rounded-lg">
-                <p className="text-sm text-gray-600">Perçu</p>
+                <p className="text-sm text-gray-600">{t('collected')}</p>
                 <p className="font-semibold text-green-700">{totalPaye.toLocaleString()} MAD</p>
               </div>
               <div className="p-3 bg-orange-50 rounded-lg">
-                <p className="text-sm text-gray-600">Reste</p>
+                <p className="text-sm text-gray-600">{t('remaining')}</p>
                 <p className="font-semibold text-orange-700">{totalEnAttente.toLocaleString()} MAD</p>
               </div>
             </div>
@@ -175,7 +177,7 @@ const FinancesPage: React.FC = () => {
         {/* Répartition par Type de Paiement */}
         <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Moyens de Paiement</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('paymentMethods')}</h3>
             <CreditCard className="h-5 w-5 text-blue-500" />
           </div>
           
@@ -215,10 +217,10 @@ const FinancesPage: React.FC = () => {
               onChange={(e) => setFilterStatut(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="Tous">Tous les statuts</option>
-              <option value="Validé">Validé</option>
-              <option value="En attente">En attente</option>
-              <option value="Rejeté">Rejeté</option>
+              <option value="Tous">{t('allStatuses')}</option>
+              <option value="Validé">{t('validated')}</option>
+              <option value="En attente">{t('pending')}</option>
+              <option value="Rejeté">{t('rejected')}</option>
             </select>
           </div>
           <select
@@ -226,10 +228,10 @@ const FinancesPage: React.FC = () => {
             onChange={(e) => setFilterPeriod(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="Tous">Toutes les périodes</option>
-            <option value="Ce mois">Ce mois</option>
-            <option value="Trimestre">Ce trimestre</option>
-            <option value="Année">Cette année</option>
+            <option value="Tous">{t('allPeriods')}</option>
+            <option value="Ce mois">{t('thisMonth')}</option>
+            <option value="Trimestre">{t('thisQuarter')}</option>
+            <option value="Année">{t('thisYear')}</option>
           </select>
         </div>
       </div>
@@ -238,7 +240,7 @@ const FinancesPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
-            Historique des Paiements ({filteredPaiements.length})
+            {t('paymentHistory')} ({filteredPaiements.length})
           </h3>
         </div>
         
@@ -273,11 +275,11 @@ const FinancesPage: React.FC = () => {
                       <div className="space-y-1">
                         <div className="flex items-center space-x-2">
                           <Calendar className="h-4 w-4" />
-                          <span>Payé le {formatDate(paiement.datePaiement)}</span>
+                          <span>{t('paidOn')} {formatDate(paiement.datePaiement)}</span>
                         </div>
                         {affaire && (
                           <div className="text-xs text-gray-500">
-                            Affaire: {affaire.type} • Budget: {affaire.budget.toLocaleString()} MAD
+                            {t('case')}: {affaire.type} • {t('budget')}: {affaire.budget.toLocaleString()} MAD
                           </div>
                         )}
                       </div>
@@ -292,8 +294,8 @@ const FinancesPage: React.FC = () => {
         {filteredPaiements.length === 0 && (
           <div className="p-12 text-center">
             <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun paiement trouvé</h3>
-            <p className="text-gray-500">Essayez de modifier vos critères de recherche</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noResults')}</h3>
+            <p className="text-gray-500">{t('tryModifyingSearchCriteria')}</p>
           </div>
         )}
       </div>
