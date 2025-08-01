@@ -36,3 +36,24 @@ export interface Paiement {
 }
 
 export type NavigationPage = 'dashboard' | 'clients' | 'affaires' | 'finances' | 'outils';
+
+export interface OMPICSearchResult {
+  id: string;
+  numeroDepot: string;
+  nomMarque: string;
+  deposant: string;
+  dateDepot: string;
+  dateExpiration?: string;
+  statut: 'En cours' | 'Enregistrée' | 'Expirée' | 'Rejetée';
+  classes: string[];
+  description?: string;
+  imageUrl?: string;
+}
+
+export interface OMPICSearchParams {
+  query: string;
+  type: 'marque' | 'brevet' | 'design';
+  statut?: string;
+  dateDebut?: string;
+  dateFin?: string;
+}
