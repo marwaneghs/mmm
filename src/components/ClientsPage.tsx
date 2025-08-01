@@ -40,11 +40,11 @@ const ClientsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{t('clientManagement')}</h2>
-          <p className="text-gray-600">{t('manageClientPortfolio')}</p>
+          <p className="text-gray-500">{t('manageClientPortfolio')}</p>
         </div>
         <button
           onClick={() => setShowAddForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+          className="btn-primary flex items-center space-x-2"
         >
           <Plus className="h-4 w-4" />
           <span>{t('newClient')}</span>
@@ -52,7 +52,7 @@ const ClientsPage: React.FC = () => {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+      <div className="modern-card p-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -61,7 +61,7 @@ const ClientsPage: React.FC = () => {
               placeholder={t('searchByNameOrEmail')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="modern-input pl-10"
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -69,7 +69,7 @@ const ClientsPage: React.FC = () => {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as any)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="modern-select"
             >
               <option value="Tous">{t('allTypes')}</option>
               <option value="National">{t('nationalClients')}</option>
@@ -81,56 +81,62 @@ const ClientsPage: React.FC = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <div className="stats-card stats-card-blue">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">{t('totalClients')}</p>
-              <p className="text-2xl font-bold text-blue-600">{clients.length}</p>
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">{t('totalClients')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">{clients.length}</p>
             </div>
-            <User className="h-8 w-8 text-blue-500" />
+            <div className="p-3 bg-gray-50 rounded-xl">
+              <User className="h-6 w-6 text-gray-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <div className="stats-card stats-card-green">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">{t('nationalClients')}</p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">{t('nationalClients')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
                 {clients.filter(c => c.typeClient === 'National').length}
               </p>
             </div>
-            <Globe className="h-8 w-8 text-green-500" />
+            <div className="p-3 bg-gray-50 rounded-xl">
+              <Globe className="h-6 w-6 text-gray-600" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
+        <div className="stats-card stats-card-purple">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">{t('internationalClients')}</p>
-              <p className="text-2xl font-bold text-purple-600">
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">{t('internationalClients')}</p>
+              <p className="text-3xl font-bold text-gray-900 mt-2">
                 {clients.filter(c => c.typeClient === 'International').length}
               </p>
             </div>
-            <Building className="h-8 w-8 text-purple-500" />
+            <div className="p-3 bg-gray-50 rounded-xl">
+              <Building className="h-6 w-6 text-gray-600" />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Clients List */}
-      <div className="bg-white rounded-lg shadow border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="modern-card-elevated">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-bold text-gray-900">
             {t('clientsList')} ({filteredClients.length})
           </h3>
         </div>
         
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-100">
           {filteredClients.map((client) => (
-            <div key={client.id} className="p-6 hover:bg-gray-50 transition-colors">
+            <div key={client.id} className="p-6 hover:bg-gray-50 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className={`p-3 rounded-full ${
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                     client.typeClient === 'National' 
-                      ? 'bg-blue-100 text-blue-600' 
-                      : 'bg-green-100 text-green-600'
+                      ? 'bg-blue-50 text-blue-600' 
+                      : 'bg-green-50 text-green-600'
                   }`}>
                     {client.typeClient === 'National' ? (
                       <Globe className="h-6 w-6" />
@@ -141,16 +147,16 @@ const ClientsPage: React.FC = () => {
                   
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
-                      <h4 className="text-lg font-semibold text-gray-900">{client.nom}</h4>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
+                      <h4 className="text-lg font-bold text-gray-900">{client.nom}</h4>
+                      <span className={`badge ${
                         client.typeClient === 'National'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
+                          ? 'badge-blue'
+                          : 'badge-green'
                       }`}>
                         {client.typeClient === 'National' ? t('national') : t('international')}
                       </span>
                       {client.actif && (
-                        <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                        <span className="badge badge-green">
                           {t('active')}
                         </span>
                       )}
@@ -178,7 +184,7 @@ const ClientsPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200">
                   <Edit className="h-5 w-5" />
                 </button>
               </div>
@@ -188,8 +194,10 @@ const ClientsPage: React.FC = () => {
         
         {filteredClients.length === 0 && (
           <div className="p-12 text-center">
-            <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noResults')}</h3>
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{t('noResults')}</h3>
             <p className="text-gray-500">{t('tryModifyingSearchCriteria')}</p>
           </div>
         )}

@@ -9,7 +9,10 @@ import {
   Calculator, 
   ExternalLink,
   Scale,
-  Building2
+  Building2,
+  Bell,
+  Search,
+  Menu
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -30,22 +33,24 @@ const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, children }) =>
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex">
+    <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className="w-64 bg-white/80 backdrop-blur-xl shadow-large border-r border-white/20">
-        <div className="p-6 border-b border-white/20">
+      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="p-3 gradient-primary text-white rounded-xl shadow-medium">
-              <Scale className="h-6 w-6" />
+            <div className="w-10 h-10 bg-gradient rounded-xl flex items-center justify-center shadow-sm">
+              <Scale className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">{t('appTitle')}</h1>
-              <p className="text-sm text-gray-600">{t('appSubtitle')}</p>
+              <h1 className="text-lg font-bold text-gray-900">{t('appTitle')}</h1>
+              <p className="text-xs text-gray-500 font-medium">{t('appSubtitle')}</p>
             </div>
           </div>
         </div>
         
-        <nav className="mt-6">
+        {/* Navigation */}
+        <nav className="flex-1 py-6">
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.id;
@@ -54,41 +59,74 @@ const Layout: React.FC<LayoutProps> = ({ currentPage, onNavigate, children }) =>
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`w-full flex items-center px-6 py-4 text-left transition-all duration-300 hover-lift ${
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-r-4 border-blue-500 shadow-soft'
-                    : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 hover:text-blue-600'
-                }`}
+                className={`nav-item ${isActive ? 'active' : ''}`}
               >
-                <Icon className={`h-5 w-5 mr-3 transition-colors ${isActive ? 'text-blue-600' : ''}`} />
-                <span className="font-medium">{item.label}</span>
+                <Icon className="h-5 w-5 mr-3" />
+                <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
+
+        {/* User Profile Section */}
+        <div className="p-6 border-t border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="avatar">
+              <span>CA</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 truncate">Cabinet Avocat</p>
+              <p className="text-xs text-gray-500 truncate">Propriété Industrielle</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        <header className="bg-white/70 backdrop-blur-xl shadow-soft border-b border-white/20">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-700 bg-clip-text text-transparent">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900">
                 {navigationItems.find(item => item.id === currentPage)?.label}
-              </h2>
-              <div className="flex items-center space-x-4">
-                <LanguageSelector />
-                <div className="hidden lg:flex items-center space-x-2 px-3 py-2 bg-white/50 rounded-lg">
-                  <Building2 className="h-5 w-5 text-blue-500" />
-                  <span className="text-sm font-medium text-gray-700">{t('headerSubtitle')}</span>
-                </div>
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Search */}
+              <div className="relative hidden md:block">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Rechercher..."
+                  className="modern-input pl-10 w-64"
+                />
+              </div>
+              
+              {/* Notifications */}
+              <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              
+              {/* Language Selector */}
+              <LanguageSelector />
+              
+              {/* Profile Badge */}
+              <div className="hidden lg:flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg">
+                <Building2 className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">{t('headerSubtitle')}</span>
               </div>
             </div>
           </div>
         </header>
         
-        <main className="p-8">
-          {children}
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto p-6">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
