@@ -28,6 +28,7 @@ const OutilsPage: React.FC = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [searchTime, setSearchTime] = useState<number | null>(null);
   const [selectedResult, setSelectedResult] = useState<OMPICSearchResult | null>(null);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([
     'TechnoSoft',
     'M202411001',
@@ -39,6 +40,7 @@ const OutilsPage: React.FC = () => {
       setIsSearching(true);
       setSearchResults([]);
       setSearchTime(null);
+      setSearchError(null);
       
       try {
         const params: OMPICSearchParams = {
@@ -53,6 +55,7 @@ const OutilsPage: React.FC = () => {
         // Add to recent searches
         setRecentSearches(prev => [searchTerm, ...prev.filter(s => s !== searchTerm)].slice(0, 5));
       } catch (error) {
+        setSearchError('Erreur lors de la recherche. Veuillez réessayer.');
         console.error('Erreur lors de la recherche OMPIC:', error);
       } finally {
         setIsSearching(false);
@@ -298,6 +301,9 @@ const OutilsPage: React.FC = () => {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">
                 Résultats de recherche OMPIC
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  (Recherche sur {OMPICService.BASE_URL || 'OMPIC officiel'})
+                </span>
               </h3>
               {searchTime && (
                 <span className="text-sm text-gray-500">
@@ -310,7 +316,22 @@ const OutilsPage: React.FC = () => {
           {isSearching ? (
             <div className="p-12 text-center">
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-600">Recherche en cours dans la base OMPIC...</p>
+              <p className="text-gray-600">Recherche en cours sur le site officiel OMPIC...</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Connexion à www.ompic.ma/fr/content/recherche-sur-les-marques-nationales
+              </p>
+            </div>
+          ) : searchError ? (
+            <div className="p-12 text-center">
+              <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Erreur de recherche</h3>
+              <p className="text-gray-500 mb-4">{searchError}</p>
+              <button
+                onClick={() => handleOmpicSearch(ompicSearch)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Réessayer
+              </button>
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
@@ -395,7 +416,10 @@ const OutilsPage: React.FC = () => {
               <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun résultat trouvé</h3>
               <p className="text-gray-500">
-                Aucune marque trouvée pour "{ompicSearch}" dans la base OMPIC
+                Aucune marque trouvée pour "{ompicSearch}" sur le site officiel OMPIC
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Essayez avec un terme de recherche différent ou vérifiez l'orthographe
               </p>
             </div>
           )}
