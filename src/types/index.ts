@@ -37,7 +37,7 @@ export interface Paiement {
 
 export type NavigationPage = 'dashboard' | 'clients' | 'affaires' | 'finances' | 'outils';
 
-export type Language = 'fr' | 'ar' | 'en' | 'es';
+export type Language = 'fr' | 'ar' | 'en' | 'es' | 'ber';
 
 export interface Translation {
   [key: string]: string | Translation;

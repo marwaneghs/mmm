@@ -46,3 +46,14 @@
 [dir="rtl"] .text-right {
   text-align: left;
 }
+
+/* Support for Berber/Tamazight script */
+[lang="ber"] {
+  font-family: 'Noto Sans Tifinagh', 'Arial Unicode MS', sans-serif;
+}
+
+/* Ensure proper text rendering for Tifinagh script */
+[lang="ber"] .tifinagh {
+  font-feature-settings: "liga" 1, "calt" 1;
+  text-rendering: optimizeLegibility;
+}
