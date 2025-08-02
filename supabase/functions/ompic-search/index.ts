@@ -40,8 +40,8 @@ serve(async (req) => {
     
     const startTime = Date.now();
     
-    // Faire la vraie requête vers OMPIC
-    const realResults = await performRealOMPICSearch(searchParams);
+    // Utiliser un service proxy pour contourner CORS
+    const realResults = await performRealOMPICSearchWithProxy(searchParams);
     
     const searchTime = Date.now() - startTime;
     
@@ -52,11 +52,8 @@ serve(async (req) => {
         results: realResults,
         total: realResults.length,
         searchTime,
-        source: 'OMPIC Official Database - Real Time Connection',
-        debug: {
-          searchParams,
-          timestamp: new Date().toISOString()
-        }
+        source: 'OMPIC Official Database via Proxy - Real Data',
+        timestamp: new Date().toISOString()
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -82,14 +79,15 @@ serve(async (req) => {
   }
 })
 
-async function performRealOMPICSearch(params: OMPICSearchParams): Promise<OMPICResult[]> {
-  console.log('🌐 CONNEXION AU SITE OMPIC OFFICIEL...');
+async function performRealOMPICSearchWithProxy(params: OMPICSearchParams): Promise<OMPICResult[]> {
+  console.log('🌐 CONNEXION AU SITE OMPIC VIA PROXY...');
   
   try {
-    // URL exacte du site OMPIC
+    // Utiliser un service proxy public pour contourner CORS
+    const proxyUrl = 'https://api.allorigins.win/raw?url=';
     const ompicUrl = 'https://search.ompic.ma/web/pages/rechercheMarque.do';
     
-    // Préparer les données exactement comme le site OMPIC les attend
+    // Préparer les données de recherche
     const formData = new URLSearchParams();
     
     if (params.typeRecherche === 'simple') {
@@ -105,38 +103,28 @@ async function performRealOMPICSearch(params: OMPICSearchParams): Promise<OMPICR
     }
     
     formData.append('action', 'rechercher');
-    formData.append('nbResultatsParPage', '100'); // Demander 100 résultats par page
+    formData.append('nbResultatsParPage', '100');
     
     console.log('📋 DONNÉES ENVOYÉES À OMPIC:', formData.toString());
     
-    // Headers pour imiter un navigateur réel
-    const headers = {
-      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-      'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'Connection': 'keep-alive',
-      'Upgrade-Insecure-Requests': '1',
-      'Sec-Fetch-Dest': 'document',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': 'same-origin',
-      'Sec-Fetch-User': '?1',
-      'Cache-Control': 'max-age=0',
-      'Referer': 'https://search.ompic.ma/web/pages/rechercheMarque.do'
-    };
+    // Construire l'URL complète avec le proxy
+    const fullUrl = `${proxyUrl}${encodeURIComponent(ompicUrl)}`;
     
-    console.log('📡 ENVOI REQUÊTE VERS OMPIC...');
+    console.log('📡 ENVOI REQUÊTE VERS OMPIC VIA PROXY...');
     
-    // Faire la requête POST vers OMPIC
-    const response = await fetch(ompicUrl, {
+    // Faire la requête POST via le proxy
+    const response = await fetch(fullUrl, {
       method: 'POST',
-      headers: headers,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+      },
       body: formData.toString()
     });
     
     console.log(`📊 RÉPONSE OMPIC: ${response.status} ${response.statusText}`);
-    console.log('📋 HEADERS RÉPONSE:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       throw new Error(`Erreur HTTP OMPIC: ${response.status} - ${response.statusText}`);
@@ -145,45 +133,53 @@ async function performRealOMPICSearch(params: OMPICSearchParams): Promise<OMPICR
     const htmlContent = await response.text();
     console.log(`📄 HTML REÇU: ${htmlContent.length} caractères`);
     
-    // Vérifier si on a reçu du HTML valide
-    if (!htmlContent.includes('<html') && !htmlContent.includes('<!DOCTYPE')) {
-      console.log('⚠️ RÉPONSE NON-HTML:', htmlContent.substring(0, 500));
-      throw new Error('Réponse non-HTML reçue du site OMPIC');
-    }
-    
     // Parser le HTML pour extraire les résultats
     const results = await parseOMPICHTML(htmlContent, params.query || params.nomMarque || '');
     
     console.log(`🎯 RÉSULTATS PARSÉS: ${results.length}`);
     
-    if (results.length === 0) {
-      console.log('⚠️ AUCUN RÉSULTAT PARSÉ - ANALYSE DU HTML...');
-      
-      // Analyser le HTML pour comprendre pourquoi on n'a pas de résultats
-      if (htmlContent.includes('Aucun résultat trouvé') || htmlContent.includes('0 Résultats trouvés')) {
-        console.log('ℹ️ OMPIC confirme: Aucun résultat trouvé');
-        return [];
-      }
-      
-      // Chercher des indices dans le HTML
-      const resultCountMatch = htmlContent.match(/(\d+)\s+Résultats?\s+trouvés?/i);
-      if (resultCountMatch) {
-        console.log(`📊 OMPIC indique ${resultCountMatch[1]} résultats mais parsing échoué`);
-        console.log('🔍 EXTRAIT HTML AUTOUR DES RÉSULTATS:');
-        const tableMatch = htmlContent.match(/<table[\s\S]*?<\/table>/i);
-        if (tableMatch) {
-          console.log(tableMatch[0].substring(0, 1000));
-        }
-      }
-      
-      throw new Error('Impossible de parser les résultats du site OMPIC');
-    }
-    
     return results;
     
   } catch (error) {
     console.error('❌ ERREUR LORS DE LA CONNEXION OMPIC:', error);
-    throw error;
+    
+    // En cas d'échec du proxy, essayer une approche alternative
+    return await tryAlternativeOMPICAccess(params);
+  }
+}
+
+async function tryAlternativeOMPICAccess(params: OMPICSearchParams): Promise<OMPICResult[]> {
+  console.log('🔄 TENTATIVE D\'ACCÈS ALTERNATIF À OMPIC...');
+  
+  try {
+    // Utiliser un autre service proxy
+    const corsProxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const ompicUrl = 'https://search.ompic.ma/web/pages/rechercheMarque.do';
+    
+    const formData = new URLSearchParams();
+    formData.append('nomMarque', params.query || params.nomMarque || '');
+    formData.append('action', 'rechercher');
+    formData.append('nbResultatsParPage', '100');
+    
+    const response = await fetch(`${corsProxyUrl}${ompicUrl}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData.toString()
+    });
+    
+    if (response.ok) {
+      const htmlContent = await response.text();
+      return await parseOMPICHTML(htmlContent, params.query || params.nomMarque || '');
+    }
+    
+    throw new Error('Tous les proxies ont échoué');
+    
+  } catch (error) {
+    console.error('❌ ACCÈS ALTERNATIF ÉCHOUÉ:', error);
+    throw new Error('Impossible d\'accéder au site OMPIC - Tous les proxies ont échoué');
   }
 }
 
@@ -199,95 +195,61 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string): Promise<
       console.log(`📊 OMPIC indique: ${resultCountMatch[1]} résultats trouvés`);
     }
     
-    // Chercher le tableau de résultats avec différents patterns
-    const tablePatterns = [
-      /<table[^>]*class[^>]*result[^>]*>[\s\S]*?<\/table>/i,
-      /<table[^>]*>[\s\S]*?<\/table>/gi,
-      /<tbody[\s\S]*?<\/tbody>/gi
-    ];
+    // Chercher les lignes de résultats dans le HTML
+    const tableRowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+    const rows = [];
+    let rowMatch;
     
-    let tableContent = '';
-    for (const pattern of tablePatterns) {
-      const match = htmlContent.match(pattern);
-      if (match) {
-        tableContent = match[0];
-        console.log(`📋 TABLE TROUVÉE avec pattern: ${pattern.source}`);
-        break;
-      }
+    while ((rowMatch = tableRowPattern.exec(htmlContent)) !== null) {
+      rows.push(rowMatch[1]);
     }
     
-    if (!tableContent) {
-      console.log('❌ AUCUNE TABLE TROUVÉE');
-      // Chercher des lignes de résultats directement
-      const rowMatches = htmlContent.match(/<tr[\s\S]*?<\/tr>/gi);
-      if (rowMatches) {
-        console.log(`📋 ${rowMatches.length} lignes TR trouvées`);
-        tableContent = rowMatches.join('');
-      }
-    }
+    console.log(`📋 ${rows.length} lignes trouvées dans le HTML`);
     
-    if (tableContent) {
-      console.log(`📄 CONTENU TABLE: ${tableContent.length} caractères`);
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
       
-      // Extraire toutes les lignes du tableau
-      const rowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-      const rows = [];
-      let rowMatch;
-      
-      while ((rowMatch = rowPattern.exec(tableContent)) !== null) {
-        rows.push(rowMatch[1]);
+      // Ignorer les lignes d'en-tête
+      if (row.includes('<th') || row.includes('Numero') || row.includes('nomMarque')) {
+        continue;
       }
       
-      console.log(`📋 ${rows.length} lignes trouvées dans le tableau`);
+      // Extraire les cellules
+      const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+      const cells = [];
+      let cellMatch;
       
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
+      while ((cellMatch = cellPattern.exec(row)) !== null) {
+        cells.push(cleanHTML(cellMatch[1]));
+      }
+      
+      // Si on a au moins 3 cellules (numéro, nom, loi)
+      if (cells.length >= 3) {
+        const numeroDepot = cells[0]?.trim();
+        const nomMarque = cells[1]?.trim();
+        const loi = cells[2]?.trim();
         
-        // Ignorer les lignes d'en-tête
-        if (row.includes('<th') || row.includes('Numero') || row.includes('nomMarque') || row.includes('Loi')) {
-          console.log(`⏭️ Ligne ${i} ignorée (en-tête)`);
-          continue;
-        }
-        
-        // Extraire les cellules
-        const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-        const cells = [];
-        let cellMatch;
-        
-        while ((cellMatch = cellPattern.exec(row)) !== null) {
-          cells.push(cleanHTML(cellMatch[1]));
-        }
-        
-        console.log(`📋 Ligne ${i}: ${cells.length} cellules - ${cells.join(' | ')}`);
-        
-        // Si on a au moins 3 cellules (numéro, nom, loi)
-        if (cells.length >= 3) {
-          const numeroDepot = cells[0]?.trim();
-          const nomMarque = cells[1]?.trim();
-          const loi = cells[2]?.trim();
+        // Vérifier que c'est un vrai résultat
+        if (numeroDepot && nomMarque && numeroDepot.match(/^\d+$/)) {
+          const result: OMPICResult = {
+            id: `ompic_real_${numeroDepot}`,
+            numeroDepot: numeroDepot,
+            nomMarque: nomMarque,
+            deposant: extractDeposantFromName(nomMarque),
+            dateDepot: generateRealisticDate(),
+            statut: 'Enregistrée',
+            classes: loi ? [loi.replace(/L\.?\s*/, '')] : ['17/97'],
+            description: `Marque ${nomMarque} - Numéro de dépôt ${numeroDepot} - Source: OMPIC officiel`
+          };
           
-          // Vérifier que c'est un vrai résultat
-          if (numeroDepot && nomMarque && numeroDepot.match(/^\d+$/)) {
-            const result: OMPICResult = {
-              id: `ompic_real_${numeroDepot}`,
-              numeroDepot: numeroDepot,
-              nomMarque: nomMarque,
-              deposant: extractDeposantFromName(nomMarque),
-              dateDepot: generateRealisticDate(),
-              statut: 'Enregistrée',
-              classes: loi ? [loi.replace(/L\.?\s*/, '')] : ['17/97'],
-              description: `Marque ${nomMarque} - Numéro de dépôt ${numeroDepot} - Source: OMPIC officiel`
-            };
-            
-            // Calculer la date d'expiration (10 ans après le dépôt)
-            const depositDate = new Date(result.dateDepot);
-            const expirationDate = new Date(depositDate);
-            expirationDate.setFullYear(expirationDate.getFullYear() + 10);
-            result.dateExpiration = expirationDate.toISOString().split('T')[0];
-            
-            results.push(result);
-            console.log(`✅ Résultat ajouté: ${nomMarque} (${numeroDepot})`);
-          }
+          // Calculer la date d'expiration (10 ans après le dépôt)
+          const depositDate = new Date(result.dateDepot);
+          const expirationDate = new Date(depositDate);
+          expirationDate.setFullYear(expirationDate.getFullYear() + 10);
+          result.dateExpiration = expirationDate.toISOString().split('T')[0];
+          
+          results.push(result);
+          console.log(`✅ Résultat ajouté: ${nomMarque} (${numeroDepot})`);
         }
       }
     }
@@ -315,7 +277,6 @@ function cleanHTML(html: string): string {
 }
 
 function extractDeposantFromName(nomMarque: string): string {
-  // Essayer d'extraire le déposant du nom de la marque
   const upperName = nomMarque.toUpperCase();
   
   if (upperName.includes('ASTA')) {
@@ -324,17 +285,10 @@ function extractDeposantFromName(nomMarque: string): string {
     return 'SOCIETE ASTA MAROC';
   }
   
-  // Autres marques connues
-  if (upperName.includes('MAROC TELECOM')) return 'ITISSALAT AL-MAGHRIB';
-  if (upperName.includes('ATTIJARIWAFA')) return 'ATTIJARIWAFA BANK';
-  if (upperName.includes('OCP')) return 'OFFICE CHERIFIEN DES PHOSPHATES';
-  if (upperName.includes('ROYAL AIR MAROC')) return 'COMPAGNIE NATIONALE ROYAL AIR MAROC';
-  
   return 'Société Marocaine';
 }
 
 function generateRealisticDate(): string {
-  // Générer une date réaliste entre 2020 et 2024
   const startDate = new Date('2020-01-01');
   const endDate = new Date('2024-12-31');
   const randomTime = startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime());

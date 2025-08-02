@@ -585,9 +585,12 @@ const OutilsPage: React.FC = () => {
           {isSearching ? (
             <div className="p-12 text-center">
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-600">Connexion au site OMPIC officiel en cours...</p>
+              <p className="text-gray-600 font-semibold">🌐 Connexion au site OMPIC officiel en cours...</p>
               <p className="text-sm text-gray-500 mt-2">
-                Récupération des données réelles depuis search.ompic.ma
+                📡 Récupération des données réelles depuis search.ompic.ma via proxy
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                ⏱️ Cela peut prendre quelques secondes...
               </p>
             </div>
           ) : searchError ? (
@@ -595,11 +598,20 @@ const OutilsPage: React.FC = () => {
               <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">{t('searchError')}</h3>
               <p className="text-gray-500 mb-4">{searchError}</p>
+              <p className="text-xs text-gray-400 mb-4">
+                💡 Le site OMPIC peut bloquer les requêtes automatiques. Essayez à nouveau ou utilisez le lien direct.
+              </p>
               <button
                 onClick={() => handleOmpicSearch()}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
               >
                 {t('retry')}
+              </button>
+              <button
+                onClick={() => window.open('https://search.ompic.ma/web/pages/rechercheMarque.do', '_blank')}
+                className="ml-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                🌐 Site OMPIC Direct
               </button>
             </div>
           ) : (
