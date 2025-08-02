@@ -12,6 +12,8 @@ export class OMPICService {
     const startTime = Date.now();
     
     try {
+      console.log('🔍 Recherche OMPIC avec paramètres:', params);
+      
       // Utiliser la fonction edge pour faire la vraie requête OMPIC
       const response = await fetch(this.EDGE_FUNCTION_URL, {
         method: 'POST',
@@ -22,11 +24,16 @@ export class OMPICService {
         body: JSON.stringify({ searchParams: params })
       });
       
+      console.log('📡 Réponse du serveur:', response.status, response.statusText);
+      
       if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ Erreur réponse serveur:', errorText);
+        throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
+      console.log('✅ Données reçues:', data);
       
       const searchTime = Date.now() - startTime;
       
@@ -36,7 +43,7 @@ export class OMPICService {
         searchTime: data.searchTime || searchTime
       };
     } catch (error) {
-      console.error('Erreur lors de la recherche OMPIC:', error);
+      console.error('❌ Erreur lors de la recherche OMPIC:', error);
       
       // Fallback vers des données locales en cas d'erreur
       return this.getFallbackResults(params, Date.now() - startTime);

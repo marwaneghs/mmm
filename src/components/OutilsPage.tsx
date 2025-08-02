@@ -48,15 +48,25 @@ const OutilsPage: React.FC = () => {
                              searchParams.deposant?.trim();
     
     if (hasSearchCriteria) {
+      console.log('🚀 Démarrage recherche OMPIC...');
       setIsSearching(true);
       setSearchResults([]);
       setSearchTime(null);
       setSearchError(null);
       
       try {
+        console.log('📋 Paramètres de recherche:', searchParams);
         const response = await OMPICService.searchMarques(searchParams);
+        console.log('📊 Résultats reçus:', response);
+        
         setSearchResults(response.results);
         setSearchTime(response.searchTime);
+        
+        if (response.results.length === 0) {
+          console.log('⚠️ Aucun résultat trouvé');
+        } else {
+          console.log(`✅ ${response.results.length} résultats trouvés`);
+        }
         
         // Add to recent searches
         const searchTerm = searchParams.query || searchParams.nomMarque || searchParams.numeroDepot || '';
@@ -64,10 +74,11 @@ const OutilsPage: React.FC = () => {
           setRecentSearches(prev => [searchTerm, ...prev.filter(s => s !== searchTerm)].slice(0, 5));
         }
       } catch (error) {
-        setSearchError('Erreur lors de la recherche. Veuillez réessayer.');
-        console.error('Erreur lors de la recherche OMPIC:', error);
+        console.error('❌ Erreur recherche OMPIC:', error);
+        setSearchError(`Erreur lors de la recherche: ${error.message}`);
       } finally {
         setIsSearching(false);
+        console.log('🏁 Recherche terminée');
       }
     }
   };
