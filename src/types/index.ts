@@ -73,3 +73,26 @@ export interface OMPICSearchParams {
   typeRecherche: 'simple' | 'avancee';
   operateur?: 'ET' | 'OU';
 }
+
+export interface JusticeSearchResult {
+  id: string;
+  numeroAffaire: string;
+  tribunal: string;
+  typeAffaire: string;
+  parties: string;
+  dateAudience: string;
+  statut: string;
+  objet: string;
+  juge?: string;
+  avocat?: string;
+}
+
+export interface JusticeSearchParams {
+  query: string;
+  tribunal?: string;
+  typeAffaire?: string;
+  numeroAffaire?: string;
+  nomParties?: string;
+  dateDebut?: string;
+  dateFin?: string;
+}
