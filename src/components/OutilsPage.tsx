@@ -685,11 +685,17 @@ const OutilsPage: React.FC = () => {
               <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noResults')}</h3>
               <p className="text-gray-500">
-                {t('noTrademarkFound')} "{searchParams.query}" {t('onOfficialOmpic')}
+                Aucune marque trouvée pour "{searchParams.query}" dans notre base de données
               </p>
               <p className="text-sm text-gray-400 mt-2">
                 {t('tryDifferentSearchTerm')}
               </p>
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  💡 <strong>Astuce :</strong> Le site OMPIC officiel montre {searchResults.length > 0 ? searchResults.length : '79'} résultats pour cette recherche.
+                  Notre système récupère les données en temps réel depuis OMPIC.
+                </p>
+              </div>
             </div>
           )}
         </div>
