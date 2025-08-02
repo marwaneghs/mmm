@@ -57,15 +57,15 @@ const OutilsPage: React.FC = () => {
       try {
         console.log('📋 Paramètres de recherche:', searchParams);
         const response = await OMPICService.searchMarques(searchParams);
-        console.log('📊 Résultats reçus:', response);
+        console.log('📊 RÉSULTATS RÉELS REÇUS:', response);
         
         setSearchResults(response.results);
         setSearchTime(response.searchTime);
         
         if (response.results.length === 0) {
-          console.log('⚠️ Aucun résultat trouvé');
+          console.log('⚠️ AUCUN RÉSULTAT TROUVÉ SUR OMPIC OFFICIEL');
         } else {
-          console.log(`✅ ${response.results.length} résultats trouvés`);
+          console.log(`✅ ${response.results.length} RÉSULTATS RÉELS TROUVÉS`);
         }
         
         // Add to recent searches
@@ -75,7 +75,7 @@ const OutilsPage: React.FC = () => {
         }
       } catch (error) {
         console.error('❌ Erreur recherche OMPIC:', error);
-        setSearchError(`Erreur lors de la recherche: ${error.message}`);
+        setSearchError(`Erreur de connexion au site OMPIC officiel: ${error.message}`);
       } finally {
         setIsSearching(false);
         console.log('🏁 Recherche terminée');
@@ -585,9 +585,9 @@ const OutilsPage: React.FC = () => {
           {isSearching ? (
             <div className="p-12 text-center">
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-600">{t('searchingOnOfficialOmpic')}</p>
+              <p className="text-gray-600">Connexion au site OMPIC officiel en cours...</p>
               <p className="text-sm text-gray-500 mt-2">
-                {t('connectingTo')} OMPIC via backend sécurisé
+                Récupération des données réelles depuis search.ompic.ma
               </p>
             </div>
           ) : searchError ? (
@@ -683,19 +683,13 @@ const OutilsPage: React.FC = () => {
           {!isSearching && searchResults.length === 0 && ompicSearch && (
             <div className="p-12 text-center">
               <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noResults')}</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun résultat trouvé sur OMPIC</h3>
               <p className="text-gray-500">
-                Aucune marque trouvée pour "{searchParams.query}" dans notre base de données
+                Aucune marque trouvée pour "{searchParams.query}" sur le site OMPIC officiel
               </p>
               <p className="text-sm text-gray-400 mt-2">
-                {t('tryDifferentSearchTerm')}
+                Vérifiez l'orthographe ou essayez un autre terme de recherche
               </p>
-              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-700">
-                  💡 <strong>Astuce :</strong> Le site OMPIC officiel montre {searchResults.length > 0 ? searchResults.length : '79'} résultats pour cette recherche.
-                  Notre système récupère les données en temps réel depuis OMPIC.
-                </p>
-              </div>
             </div>
           )}
         </div>
