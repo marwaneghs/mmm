@@ -172,6 +172,12 @@ export const translations: Record<Language, Translation> = {
     justiceServices: 'Services Justice',
     clientsList: 'Liste des Clients',
     tryModifyingSearchCriteria: 'Essayez de modifier vos critères de recherche',
+    justiceSearchResults: 'Résultats de recherche Justice',
+    searchingOnOfficialJustice: 'Recherche en cours sur le portail Justice officiel...',
+    court: 'Tribunal',
+    parties: 'Parties',
+    hearing: 'Audience',
+    judge: 'Juge',
     
     // Common
     loading: 'Chargement...',

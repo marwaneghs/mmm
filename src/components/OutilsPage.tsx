@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { OMPICService } from '../services/ompicService';
+import { JusticeService } from '../services/justiceService';
 import { OMPICSearchResult, OMPICSearchParams } from '../types';
+import { JusticeSearchResult, JusticeSearchParams } from '../types';
 import { useTranslation } from '../hooks/useTranslation';
 import { 
   ExternalLink, 
@@ -32,6 +34,10 @@ const OutilsPage: React.FC = () => {
     operateur: 'ET'
   });
   const [justiceSearch, setJusticeSearch] = useState('');
+  const [justiceResults, setJusticeResults] = useState<JusticeSearchResult[]>([]);
+  const [isJusticeSearching, setIsJusticeSearching] = useState(false);
+  const [justiceSearchTime, setJusticeSearchTime] = useState<number | null>(null);
+  const [justiceSearchError, setJusticeSearchError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<OMPICSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchTime, setSearchTime] = useState<number | null>(null);
@@ -100,11 +106,44 @@ const OutilsPage: React.FC = () => {
 
   const handleJusticeSearch = (searchTerm: string) => {
     if (searchTerm.trim()) {
-      const url = `https://justice.gov.ma/tribunaux-de-premiere-instance/`;
-      window.open(url, '_blank');
+      performJusticeSearch(searchTerm);
+    }
+  };
+
+  const performJusticeSearch = async (searchTerm: string) => {
+    console.log('⚖️ Démarrage recherche Justice...');
+    setIsJusticeSearching(true);
+    setJusticeResults([]);
+    setJusticeSearchTime(null);
+    setJusticeSearchError(null);
+    
+    try {
+      const searchParams: JusticeSearchParams = {
+        query: searchTerm,
+        numeroAffaire: searchTerm.match(/\d+/) ? searchTerm : undefined
+      };
+      
+      console.log('📋 Paramètres de recherche Justice:', searchParams);
+      const response = await JusticeService.searchAffaires(searchParams);
+      console.log('📊 RÉSULTATS JUSTICE RÉELS REÇUS:', response);
+      
+      setJusticeResults(response.results);
+      setJusticeSearchTime(response.searchTime);
+      
+      if (response.results.length === 0) {
+        console.log('⚠️ AUCUN RÉSULTAT TROUVÉ SUR PORTAIL JUSTICE OFFICIEL');
+      } else {
+        console.log(`✅ ${response.results.length} RÉSULTATS JUSTICE RÉELS TROUVÉS`);
+      }
       
       // Add to recent searches
       setRecentSearches(prev => [searchTerm, ...prev.filter(s => s !== searchTerm)].slice(0, 5));
+    } catch (error) {
+      console.error('❌ Erreur recherche Justice:', error);
+      setJusticeSearchError(`Erreur de connexion au portail Justice officiel: ${error.message}`);
+    } finally {
+      setIsJusticeSearching(false);
+      console.log('🏁 Recherche Justice terminée');
     }
   };
 
@@ -542,10 +581,15 @@ const OutilsPage: React.FC = () => {
               />
               <button
                 onClick={() => handleJusticeSearch(justiceSearch)}
+                disabled={isJusticeSearching}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
               >
-                <Search className="h-4 w-4" />
-                <span>{t('search')}</span>
+                {isJusticeSearching ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+                <span>{isJusticeSearching ? t('searching') : t('search')}</span>
               </button>
             </div>
             
@@ -699,6 +743,134 @@ const OutilsPage: React.FC = () => {
               </p>
               <p className="text-sm text-gray-400 mt-2">
                 Vérifiez l'orthographe ou essayez un autre terme de recherche
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Justice Search Results */}
+      {(justiceResults.length > 0 || isJusticeSearching) && (
+        <div className="bg-white rounded-lg shadow border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t('justiceSearchResults')}
+                <span className="ml-2 text-sm font-normal text-gray-500">
+                  ({t('searchOn')} Portail Justice officiel)
+                </span>
+              </h3>
+              {justiceSearchTime && (
+                <span className="text-sm text-gray-500">
+                  {justiceResults.length} {t('results')} {t('in')} {justiceSearchTime}ms
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {isJusticeSearching ? (
+            <div className="p-12 text-center">
+              <Loader2 className="h-8 w-8 text-purple-500 mx-auto mb-4 animate-spin" />
+              <p className="text-gray-600 font-semibold">{t('searchingOnOfficialJustice')}</p>
+              <p className="text-sm text-gray-500 mt-2">{t('connectingTo')} justice.gov.ma</p>
+              <p className="text-xs text-gray-400 mt-1">
+                Récupération des données réelles en cours...
+              </p>
+            </div>
+          ) : justiceSearchError ? (
+            <div className="p-12 text-center">
+              <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('searchError')}</h3>
+              <p className="text-gray-500 mb-4">{justiceSearchError}</p>
+              <p className="text-xs text-gray-400 mb-4">
+                💡 Le portail Justice peut bloquer les requêtes automatiques. Essayez à nouveau ou utilisez le lien direct.
+              </p>
+              <button
+                onClick={() => performJusticeSearch(justiceSearch)}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                {t('retry')}
+              </button>
+              <button
+                onClick={() => window.open('https://justice.gov.ma/', '_blank')}
+                className="ml-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                🌐 Portail Justice Direct
+              </button>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {justiceResults.map((result) => (
+                <div key={result.id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h4 className="text-lg font-semibold text-gray-900">{result.numeroAffaire}</h4>
+                        <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">
+                          {result.statut}
+                        </span>
+                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                          {result.typeAffaire}
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mb-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <Scale className="h-4 w-4" />
+                            <span>{t('court')}: {result.tribunal}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4" />
+                            <span>{t('parties')}: {result.parties}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <Calendar className="h-4 w-4" />
+                            <span>{t('hearing')}: {formatDate(result.dateAudience)}</span>
+                          </div>
+                          {result.juge && (
+                            <div className="flex items-center space-x-2">
+                              <User className="h-4 w-4" />
+                              <span>{t('judge')}: {result.juge}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {result.objet && (
+                        <div className="flex items-start space-x-2">
+                          <Info className="h-4 w-4 text-gray-400 mt-0.5" />
+                          <p className="text-sm text-gray-700">{result.objet}</p>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2 ml-4">
+                      <button
+                        onClick={() => navigator.clipboard.writeText(result.numeroAffaire)}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title={t('copyNumber')}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {!isJusticeSearching && justiceResults.length === 0 && justiceSearch && (
+            <div className="p-12 text-center">
+              <Scale className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun résultat trouvé sur le portail Justice</h3>
+              <p className="text-gray-500">
+                Aucune affaire trouvée pour "{justiceSearch}" sur le portail Justice officiel
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Vérifiez le numéro d'affaire ou essayez un autre terme de recherche
               </p>
             </div>
           )}
