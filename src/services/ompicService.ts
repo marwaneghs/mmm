@@ -12,9 +12,9 @@ export class OMPICService {
     const startTime = Date.now();
     
     try {
-      console.log('🔍 Recherche OMPIC avec paramètres:', params);
+      console.log('🔍 RECHERCHE OMPIC RÉELLE - Paramètres:', params);
       
-      // Utiliser la fonction edge pour faire la vraie requête OMPIC
+      // Utiliser la fonction edge pour faire la VRAIE requête OMPIC
       const response = await fetch(this.EDGE_FUNCTION_URL, {
         method: 'POST',
         headers: {
@@ -24,16 +24,18 @@ export class OMPICService {
         body: JSON.stringify({ searchParams: params })
       });
       
-      console.log('📡 Réponse du serveur:', response.status, response.statusText);
+      console.log('📡 RÉPONSE SERVEUR OMPIC:', response.status, response.statusText);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Erreur réponse serveur:', errorText);
+        console.error('❌ ERREUR RÉPONSE SERVEUR:', errorText);
         throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
       }
       
       const data = await response.json();
-      console.log('✅ Données reçues:', data);
+      console.log('✅ DONNÉES RÉELLES REÇUES:', data);
+      console.log('📊 SOURCE:', data.source);
+      console.log('🎯 NOMBRE DE RÉSULTATS:', data.total);
       
       const searchTime = Date.now() - startTime;
       
@@ -43,19 +45,12 @@ export class OMPICService {
         searchTime: data.searchTime || searchTime
       };
     } catch (error) {
-      console.error('❌ Erreur lors de la recherche OMPIC:', error);
+      console.error('❌ ERREUR CONNEXION OMPIC RÉELLE:', error);
       
-      // Fallback vers des données locales en cas d'erreur
-      return this.getFallbackResults(params, Date.now() - startTime);
+      // En cas d'erreur, retourner une erreur claire
+      throw new Error(`Impossible de se connecter au site OMPIC officiel: ${error.message}`);
     }
   }
-
-  // Données de fallback en cas d'erreur de connexion
-  private static getFallbackResults(params: OMPICSearchParams, searchTime: number): {
-    results: OMPICSearchResult[];
-    total: number;
-    searchTime: number;
-  } {
     const fallbackDatabase = [
       {
         id: 'fallback_1',
