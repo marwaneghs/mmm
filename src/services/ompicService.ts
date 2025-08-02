@@ -51,6 +51,14 @@ export class OMPICService {
       throw new Error(`Impossible de se connecter au site OMPIC officiel: ${error.message}`);
     }
   }
+
+  static async searchMarquesFallback(params: OMPICSearchParams): Promise<{
+    results: OMPICSearchResult[];
+    total: number;
+    searchTime: number;
+  }> {
+    const startTime = Date.now();
+    
     const fallbackDatabase = [
       {
         id: 'fallback_1',
@@ -175,6 +183,8 @@ export class OMPICService {
       });
     }
 
+    const searchTime = Date.now() - startTime;
+
     return {
       results: filteredResults,
       total: filteredResults.length,
@@ -206,8 +216,6 @@ export class OMPICService {
       return null;
     }
   }
-
-
 
   // Méthode pour rechercher des brevets (extension future)
   static async searchBrevets(params: OMPICSearchParams): Promise<{
