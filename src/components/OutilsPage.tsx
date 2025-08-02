@@ -585,12 +585,10 @@ const OutilsPage: React.FC = () => {
           {isSearching ? (
             <div className="p-12 text-center">
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-4 animate-spin" />
-              <p className="text-gray-600 font-semibold">🌐 Connexion au site OMPIC officiel en cours...</p>
-              <p className="text-sm text-gray-500 mt-2">
-                📡 Récupération des données réelles depuis search.ompic.ma via proxy
-              </p>
+              <p className="text-gray-600 font-semibold">{t('searchingOnOfficialOmpic')}</p>
+              <p className="text-sm text-gray-500 mt-2">{t('connectingTo')} search.ompic.ma</p>
               <p className="text-xs text-gray-400 mt-1">
-                ⏱️ Cela peut prendre quelques secondes...
+                Récupération des données réelles en cours...
               </p>
             </div>
           ) : searchError ? (
