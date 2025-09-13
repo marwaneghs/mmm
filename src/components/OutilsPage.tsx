@@ -411,7 +411,7 @@ const OutilsPage: React.FC = () => {
                 padding: 20px;
             }
             
-            <p>Résultats de recherche pour "${searchTerm}"</p>
+            .header h1 {
                 font-size: 2rem;
             }
             
@@ -442,7 +442,7 @@ const OutilsPage: React.FC = () => {
             <h2>📋 Détails de la recherche</h2>
             <div class="search-details">
                 <div class="search-detail">
-                    ${searchTerm}
+                    <strong>Recherche:</strong>
                     ${searchTerm}
                 </div>
                 <div class="search-detail">
@@ -453,12 +453,6 @@ const OutilsPage: React.FC = () => {
                     <strong>Date de recherche:</strong>
                     ${new Date().toLocaleDateString('fr-FR', { 
                         year: 'numeric', 
-                ${searchParams.captchaCode ? `
-                <div class="search-item">
-                    <strong>Code CAPTCHA utilisé:</strong>
-                    ${searchParams.captchaCode}
-                </div>
-                ` : ''}
                         month: 'long', 
                         day: 'numeric',
                         hour: '2-digit',
@@ -532,7 +526,7 @@ const OutilsPage: React.FC = () => {
                     `).join('')}
                 </tbody>
             </table>
-                <p>Aucune marque trouvée pour "${searchTerm}" sur le site officiel OMPIC.</p>
+            ` : `
             <div class="no-results">
                 <div class="no-results-icon">🔍</div>
                 <h3>Aucun résultat trouvé</h3>
@@ -546,7 +540,7 @@ const OutilsPage: React.FC = () => {
             <p>
                 Résultats obtenus depuis 
                 <a href="http://search.ompic.ma/web/pages/rechercheMarque.do" target="_blank" class="source-link">
-                <strong>Recherche:</strong> ${searchTerm}
+                    Site OMPIC Officiel
                 </a>
                 • Généré par Cabinet IP - Propriété Industrielle
             </p>
@@ -564,12 +558,6 @@ const OutilsPage: React.FC = () => {
       typeRecherche: 'simple',
       operateur: 'ET'
     });
-    // Vérifier que le CAPTCHA est saisi
-    if (!captchaCode.trim()) {
-      alert('Veuillez saisir le code CAPTCHA avant de rechercher');
-      return;
-    }
-    
     setCaptchaCode('');
     setSearchResults([]);
     setSearchError(null);
