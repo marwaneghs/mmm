@@ -28,7 +28,10 @@ export class OMPICService {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ searchParams: params })
+          body: JSON.stringify({ 
+            searchParams: params,
+            captchaCode: (params as any).captchaCode || ''
+          })
         });
         
         console.log('📡 RÉPONSE SERVEUR OMPIC:', response.status, response.statusText);
