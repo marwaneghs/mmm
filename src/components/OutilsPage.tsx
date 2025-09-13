@@ -165,6 +165,10 @@ const OutilsPage: React.FC = () => {
     const searchTerm = searchParams.typeRecherche === 'simple' ? searchParams.query : 
       [searchParams.nomMarque, searchParams.deposant, searchParams.numeroDepot].filter(Boolean).join(' ');
     
+    const searchTerm = searchParams.typeRecherche === 'simple' 
+      ? searchParams.query 
+      : searchParams.nomMarque || searchParams.numeroDepot || 'Recherche avancée';
+    
     return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -411,7 +415,7 @@ const OutilsPage: React.FC = () => {
                 padding: 20px;
             }
             
-            .header h1 {
+            <p>Résultats de recherche pour "${searchTerm}"</p>
                 font-size: 2rem;
             }
             
@@ -442,7 +446,7 @@ const OutilsPage: React.FC = () => {
             <h2>📋 Détails de la recherche</h2>
             <div class="search-details">
                 <div class="search-detail">
-                    <strong>Terme recherché:</strong>
+                    ${searchTerm}
                     ${searchTerm}
                 </div>
                 <div class="search-detail">
@@ -453,6 +457,12 @@ const OutilsPage: React.FC = () => {
                     <strong>Date de recherche:</strong>
                     ${new Date().toLocaleDateString('fr-FR', { 
                         year: 'numeric', 
+                ${searchParams.captchaCode ? `
+                <div class="search-item">
+                    <strong>Code CAPTCHA utilisé:</strong>
+                    ${searchParams.captchaCode}
+                </div>
+                ` : ''}
                         month: 'long', 
                         day: 'numeric',
                         hour: '2-digit',
@@ -526,7 +536,7 @@ const OutilsPage: React.FC = () => {
                     `).join('')}
                 </tbody>
             </table>
-            ` : `
+                <p>Aucune marque trouvée pour "${searchTerm}" sur le site officiel OMPIC.</p>
             <div class="no-results">
                 <div class="no-results-icon">🔍</div>
                 <h3>Aucun résultat trouvé</h3>
@@ -540,7 +550,7 @@ const OutilsPage: React.FC = () => {
             <p>
                 Résultats obtenus depuis 
                 <a href="http://search.ompic.ma/web/pages/rechercheMarque.do" target="_blank" class="source-link">
-                    le site officiel OMPIC
+                <strong>Recherche:</strong> ${searchTerm}
                 </a>
                 • Généré par Cabinet IP - Propriété Industrielle
             </p>
@@ -558,6 +568,12 @@ const OutilsPage: React.FC = () => {
       typeRecherche: 'simple',
       operateur: 'ET'
     });
+    // Vérifier que le CAPTCHA est saisi
+    if (!captchaCode.trim()) {
+      alert('Veuillez saisir le code CAPTCHA avant de rechercher');
+      return;
+    }
+    
     setCaptchaCode('');
     setSearchResults([]);
     setSearchError(null);
@@ -585,8 +601,10 @@ const OutilsPage: React.FC = () => {
     try {
       const searchParams: JusticeSearchParams = {
         query: searchTerm,
-        numeroAffaire: searchTerm.match(/\d+/) ? searchTerm : undefined
+        captchaCode: captchaCode.trim()
       };
+      
+      console.log('📋 PARAMÈTRES ENVOYÉS:', searchParams);
       
       console.log('📋 Paramètres de recherche Justice:', searchParams);
       const response = await JusticeService.searchAffaires(searchParams);
@@ -603,9 +621,25 @@ const OutilsPage: React.FC = () => {
       
       // Add to recent searches
       setRecentSearches(prev => [searchTerm, ...prev.filter(s => s !== searchTerm)].slice(0, 5));
+      // Recharger un nouveau CAPTCHA après la recherche
+      setTimeout(() => {
+        loadCaptcha();
+        setCaptchaCode('');
+      }, 1000);
+      
     } catch (error) {
       console.error('❌ Erreur recherche Justice:', error);
-      setJusticeSearchError(`Erreur de connexion au portail Justice officiel: ${error.message}`);
+      
+      const errorMessage = error.message || 'Erreur lors de la recherche OMPIC';
+      setSearchError(errorMessage);
+      
+      // Si erreur CAPTCHA, recharger automatiquement
+      if (errorMessage.includes('CAPTCHA') || errorMessage.includes('Code de vérification')) {
+        setTimeout(() => {
+          loadCaptcha();
+          setCaptchaCode('');
+        }, 2000);
+      }
     } finally {
       setIsJusticeSearching(false);
       console.log('🏁 Recherche Justice terminée');

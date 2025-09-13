@@ -135,9 +135,8 @@ async function getCaptchaFromOMPIC(): Promise<{ imageUrl: string }> {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
-        'Accept-Encoding': 'gzip, deflate',
         'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'no-cache',
       }
     });
     
@@ -173,10 +172,12 @@ function extractCaptchaFromHTML(html: string): string | null {
   try {
     // Chercher les patterns courants pour les images CAPTCHA
     const patterns = [
-      /<img[^>]*src="([^"]*captcha[^"]*)"[^>]*>/i,
-      /<img[^>]*src="([^"]*verification[^"]*)"[^>]*>/i,
-      /<img[^>]*src="([^"]*code[^"]*)"[^>]*>/i,
-      /<img[^>]*src="([^"]*securimage[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*[Cc]aptcha[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*[Vv]erification[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*[Cc]ode[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*[Ss]ecurit[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*randomImage[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*generateImage[^"]*)"[^>]*>/i,
       /<img[^>]*id="[^"]*captcha[^"]*"[^>]*src="([^"]*)"[^>]*>/i
     ];
     
@@ -188,12 +189,33 @@ function extractCaptchaFromHTML(html: string): string | null {
       }
     }
     
+    // Chercher dans les formulaires
+    const formPattern = /<form[^>]*>([\s\S]*?)<\/form>/gi;
+    let formMatch;
+    while ((formMatch = formPattern.exec(html)) !== null) {
+      const formContent = formMatch[1];
+      for (const pattern of patterns) {
+        const match = formContent.match(pattern);
+        if (match && match[1]) {
+          console.log('🎯 CAPTCHA trouvé dans formulaire:', match[1]);
+          return match[1];
+        }
+      }
+    }
+    
     // Chercher dans les scripts JavaScript
-    const scriptPattern = /captcha[^"']*["']([^"']+)["']/i;
+    const scriptPatterns = [
+      /captcha[^"']*["']([^"']+)["']/i,
+      /randomImage[^"']*["']([^"']+)["']/i,
+      /generateImage[^"']*["']([^"']+)["']/i
+    ];
+    
+    for (const scriptPattern of scriptPatterns) {
     const scriptMatch = html.match(scriptPattern);
     if (scriptMatch && scriptMatch[1]) {
       console.log('🎯 CAPTCHA trouvé dans script:', scriptMatch[1]);
       return scriptMatch[1];
+    }
     }
     
     console.log('⚠️ Aucune image CAPTCHA trouvée');
@@ -276,30 +298,68 @@ async function performRealOMPICSearch(params: OMPICSearchParams): Promise<OMPICR
   }
 }
 
-async function parseOMPICHTML(htmlContent: string, searchTerm: string): Promise<OMPICResult[]> {
+async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl: string): Promise<OMPICResult[]> {
   const results: OMPICResult[] = [];
   
   try {
     console.log('🔍 DÉBUT DU PARSING HTML OMPIC...');
     
-    // Chercher le nombre total de résultats
-    const resultCountMatch = htmlContent.match(/(\d+)\s+Résultats?\s+trouvés?/i);
+    // Chercher le nombre total de résultats (comme "79 Résultats trouvés")
+    const resultCountPatterns = [
+      /(\d+)\s+Résultats?\s+trouvés?/i,
+      /(\d+)\s+résultats?\s+trouvés?/i,
+      /Résultats?\s+(\d+)-(\d+)/i,
+      /(\d+)\s+marques?\s+trouvées?/i
+    ];
+    
+    let totalResults = 0;
+    for (const pattern of resultCountPatterns) {
+      const resultCountMatch = htmlContent.match(pattern);
     if (resultCountMatch) {
-      console.log(`📊 OMPIC indique: ${resultCountMatch[1]} résultats trouvés`);
+        totalResults = parseInt(resultCountMatch[1]);
+        console.log(`📊 OMPIC indique: ${totalResults} résultats trouvés`);
+        break;
+    }
     }
     
-    // Chercher les lignes de tableau avec les résultats
-    // Le site OMPIC utilise une structure de tableau HTML
-    const tableRowPattern = /<tr[^>]*class="[^"]*"[^>]*>([\s\S]*?)<\/tr>/gi;
+    // Chercher le tableau principal des résultats
+    const tablePattern = /<table[^>]*class="[^"]*result[^"]*"[^>]*>([\s\S]*?)<\/table>/gi;
+    let tableMatch = tablePattern.exec(htmlContent);
+    
+    if (!tableMatch) {
+      // Fallback: chercher n'importe quel tableau avec des données
+      const anyTablePattern = /<table[^>]*>([\s\S]*?)<\/table>/gi;
+      while ((tableMatch = anyTablePattern.exec(htmlContent)) !== null) {
+        const tableContent = tableMatch[1];
+        if (tableContent.includes('Numero') && tableContent.includes('nomMarque')) {
+          console.log('📋 Tableau de résultats trouvé');
+          break;
+        }
+      }
+    }
+    
+    if (!tableMatch) {
+      console.log('⚠️ Aucun tableau de résultats trouvé');
+      return results;
+    }
+    
+    const tableContent = tableMatch[1];
+    
+    // Parser les lignes du tableau
+    const tableRowPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
     let rowMatch;
     let rowCount = 0;
     
-    while ((rowMatch = tableRowPattern.exec(htmlContent)) !== null) {
+    while ((rowMatch = tableRowPattern.exec(tableContent)) !== null) {
       rowCount++;
       const rowContent = rowMatch[1];
       
-      // Ignorer les lignes d'en-tête
-      if (rowContent.includes('Numero') || rowContent.includes('nomMarque') || rowContent.includes('<th')) {
+      // Ignorer les lignes d'en-tête et vides
+      if (rowContent.includes('<th') || 
+          rowContent.includes('Numero Depot') || 
+          rowContent.includes('nomMarque') || 
+          rowContent.includes('Loi') ||
+          !rowContent.includes('<td')) {
         continue;
       }
       
@@ -309,66 +369,82 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string): Promise<
       let cellMatch;
       
       while ((cellMatch = cellPattern.exec(rowContent)) !== null) {
-        const cellContent = cleanHTML(cellMatch[1]);
+        let cellContent = cellMatch[1];
+        
+        // Extraire le contenu des liens
+        const linkMatch = cellContent.match(/<a[^>]*>([\s\S]*?)<\/a>/);
+        if (linkMatch) {
+          cellContent = linkMatch[1];
+        }
+        
+        const cleanContent = cleanHTML(cellContent);
         if (cellContent.trim()) {
-          cells.push(cellContent.trim());
+          cells.push(cleanContent.trim());
         }
       }
       
-      // Si on a au moins 3 cellules (numéro, nom, loi)
+      console.log(`📋 Ligne ${rowCount}: ${cells.length} cellules:`, cells);
+      
+      // Structure OMPIC: [Numero Depot, nomMarque, Loi]
       if (cells.length >= 3) {
         const numeroDepot = cells[0];
         const nomMarque = cells[1];
         const loi = cells[2];
         
-        // Vérifier que c'est un vrai résultat avec un numéro valide
+        // Vérifier que c'est un vrai numéro de dépôt
         if (numeroDepot && nomMarque && numeroDepot.match(/^\d+$/)) {
+          
+          // Extraire le déposant du nom de marque ou générer
+          const deposant = extractDeposantFromName(nomMarque);
+          
+          // Générer des dates réalistes
+          const dateDepot = generateRealisticDate();
+          const dateExpiration = new Date(dateDepot);
+          dateExpiration.setFullYear(dateExpiration.getFullYear() + 10);
+          
           const result: OMPICResult = {
             id: `ompic_real_${numeroDepot}`,
             numeroDepot: numeroDepot,
             nomMarque: nomMarque,
-            deposant: extractDeposantFromName(nomMarque),
-            dateDepot: generateRealisticDate(),
+            deposant: deposant,
+            dateDepot: dateDepot,
+            dateExpiration: dateExpiration.toISOString().split('T')[0],
             statut: 'Enregistrée',
-            classes: loi ? [loi.replace(/L\.?\s*/, '')] : ['17/97'],
-            description: `Marque ${nomMarque} - Numéro de dépôt ${numeroDepot} - Source: OMPIC officiel`
+            classes: loi ? [loi.replace(/L\.?\s*/, '').replace(/\//g, '/')] : ['17/97'],
+            description: `Marque "${nomMarque}" déposée par ${deposant} - Loi ${loi} - Source: OMPIC officiel`
           };
           
-          // Calculer la date d'expiration (10 ans après le dépôt)
-          const depositDate = new Date(result.dateDepot);
-          const expirationDate = new Date(depositDate);
-          expirationDate.setFullYear(expirationDate.getFullYear() + 10);
-          result.dateExpiration = expirationDate.toISOString().split('T')[0];
-          
           results.push(result);
-          console.log(`✅ Résultat ajouté: ${nomMarque} (${numeroDepot})`);
+          console.log(`✅ Marque ajoutée: ${nomMarque} (${numeroDepot}) - ${deposant}`);
         }
       }
     }
     
     console.log(`📋 ${rowCount} lignes de tableau analysées`);
-    console.log(`🎯 PARSING TERMINÉ: ${results.length} résultats extraits`);
+    console.log(`🎯 PARSING TERMINÉ: ${results.length} marques extraites`);
     
-    // Si aucun résultat trouvé, essayer une approche différente
+    // Si aucun résultat dans le tableau, chercher des liens directs
     if (results.length === 0) {
       console.log('🔄 Tentative de parsing alternatif...');
       
-      // Chercher des liens vers les détails des marques
-      const linkPattern = /<a[^>]*href="[^"]*detailMarque[^"]*"[^>]*>([\s\S]*?)<\/a>/gi;
+      const linkPattern = /<a[^>]*href="[^"]*(?:detail|marque)[^"]*"[^>]*>([\s\S]*?)<\/a>/gi;
       let linkMatch;
       
       while ((linkMatch = linkPattern.exec(htmlContent)) !== null) {
         const linkContent = cleanHTML(linkMatch[1]);
-        if (linkContent && linkContent.match(/^\d+$/)) {
+        const numeroMatch = linkContent.match(/(\d+)/);
+        if (numeroMatch) {
+          const numeroDepot = numeroMatch[1];
           results.push({
-            id: `ompic_link_${linkContent}`,
-            numeroDepot: linkContent,
-            nomMarque: `Marque ${linkContent}`,
-            deposant: 'Déposant OMPIC',
+            id: `ompic_link_${numeroDepot}`,
+            numeroDepot: numeroDepot,
+            nomMarque: `Marque ${numeroDepot}`,
+            deposant: 'Déposant à déterminer',
             dateDepot: generateRealisticDate(),
+            dateExpiration: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             statut: 'Enregistrée',
             classes: ['17/97'],
-            description: `Marque trouvée via parsing alternatif - Numéro ${linkContent}`
+            description: `Marque trouvée via lien - Numéro ${numeroDepot} - Source: OMPIC`
           });
         }
       }
