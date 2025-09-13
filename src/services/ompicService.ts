@@ -2,7 +2,7 @@ import { OMPICSearchResult, OMPICSearchParams } from '../types';
 
 // Service pour la recherche OMPIC avec backend dédié
 export class OMPICService {
-  private static readonly EDGE_FUNCTION_URL = null;
+  private static readonly EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ompic-search`;
   private static captchaCache: { imageUrl: string; timestamp: number } | null = null;
   private static readonly CAPTCHA_CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -17,45 +17,33 @@ export class OMPICService {
         return { imageUrl: this.captchaCache.imageUrl };
       }
       
-      // URL correcte pour récupérer le CAPTCHA
-      const ompicSearchUrl = 'http://search.ompic.ma/web/pages/rechercheMarque.do';
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(ompicSearchUrl)}`;
-      
-      const response = await fetch(proxyUrl, {
-        method: 'GET',
+      // Appel à l'Edge Function pour récupérer le CAPTCHA
+      const response = await fetch(this.EDGE_FUNCTION_URL, {
+        method: 'POST',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
-        }
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ action: 'getCaptcha' })
       });
       
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
       
-      const htmlContent = await response.text();
-      console.log(`📄 Page OMPIC récupérée: ${htmlContent.length} caractères`);
+      const data = await response.json();
       
-      // Extraire l'URL de l'image CAPTCHA
-      const captchaImageUrl = this.extractCaptchaFromHTML(htmlContent);
-      
-      if (captchaImageUrl) {
-        // Construire l'URL complète
-        const fullImageUrl = captchaImageUrl.startsWith('http')
-          ? captchaImageUrl 
-          : `http://search.ompic.ma${captchaImageUrl}`;
-        
+      if (data.imageUrl) {
         // Mettre en cache
         this.captchaCache = {
-          imageUrl: fullImageUrl,
+          imageUrl: data.imageUrl,
           timestamp: Date.now()
         };
         
-        console.log('✅ CAPTCHA récupéré:', fullImageUrl);
-        return { imageUrl: fullImageUrl };
+        console.log('✅ CAPTCHA récupéré:', data.imageUrl);
+        return { imageUrl: data.imageUrl };
       } else {
-        throw new Error('Image CAPTCHA non trouvée dans la page OMPIC');
+        throw new Error(data.error || 'Image CAPTCHA non trouvée');
       }
       
     } catch (error) {
@@ -78,41 +66,6 @@ export class OMPICService {
     }
   }
 
-  private static extractCaptchaFromHTML(html: string): string | null {
-    try {
-      // Chercher les patterns courants pour les images CAPTCHA
-      const patterns = [
-        /<img[^>]*src="([^"]*captcha[^"]*)"[^>]*>/i,
-        /<img[^>]*src="([^"]*verification[^"]*)"[^>]*>/i,
-        /<img[^>]*src="([^"]*code[^"]*)"[^>]*>/i,
-        /<img[^>]*src="([^"]*securimage[^"]*)"[^>]*>/i,
-        /<img[^>]*id="[^"]*captcha[^"]*"[^>]*src="([^"]*)"[^>]*>/i
-      ];
-      
-      for (const pattern of patterns) {
-        const match = html.match(pattern);
-        if (match && match[1]) {
-          console.log('🎯 Image CAPTCHA trouvée:', match[1]);
-          return match[1];
-        }
-      }
-      
-      // Chercher dans les scripts JavaScript
-      const scriptPattern = /captcha[^"']*["']([^"']+)["']/i;
-      const scriptMatch = html.match(scriptPattern);
-      if (scriptMatch && scriptMatch[1]) {
-        console.log('🎯 CAPTCHA trouvé dans script:', scriptMatch[1]);
-        return scriptMatch[1];
-      }
-      
-      console.log('⚠️ Aucune image CAPTCHA trouvée');
-      return null;
-      
-    } catch (error) {
-      console.error('❌ Erreur extraction CAPTCHA:', error);
-      return null;
-    }
-  }
   static async searchMarques(params: OMPICSearchParams): Promise<{
     results: OMPICSearchResult[];
     total: number;
@@ -123,8 +76,30 @@ export class OMPICService {
     try {
       console.log('🔍 RECHERCHE OMPIC RÉELLE - Paramètres:', params);
       
-      // Connexion directe au site OMPIC
-      return await this.performDirectOMPICSearch(params);
+      // Utiliser l'Edge Function pour la recherche
+      const response = await fetch(this.EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ 
+          action: 'search',
+          searchParams: params 
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      return {
+        results: data.results || [],
+        total: data.total || 0,
+        searchTime: data.searchTime || (Date.now() - startTime)
+      };
     } catch (error) {
       console.error('❌ ERREUR CONNEXION OMPIC RÉELLE:', error);
       

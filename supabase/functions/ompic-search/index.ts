@@ -34,28 +34,72 @@ serve(async (req) => {
   }
 
   try {
-    const { searchParams } = await req.json() as { searchParams: OMPICSearchParams };
+    const { action, searchParams } = await req.json() as { 
+      action: string; 
+      searchParams?: OMPICSearchParams 
+    };
     
-    console.log('🔍 RECHERCHE OMPIC RÉELLE - Paramètres:', searchParams);
+    if (action === 'getCaptcha') {
+      console.log('🔍 RÉCUPÉRATION CAPTCHA OMPIC...');
+      
+      try {
+        const captchaResult = await getCaptchaFromOMPIC();
+        
+        return new Response(
+          JSON.stringify(captchaResult),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        )
+      } catch (error) {
+        console.error('❌ ERREUR CAPTCHA:', error);
+        
+        return new Response(
+          JSON.stringify({
+            error: 'Erreur lors de la récupération du CAPTCHA',
+            details: error.message
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        )
+      }
+    }
     
-    const startTime = Date.now();
+    if (action === 'search' && searchParams) {
+      console.log('🔍 RECHERCHE OMPIC RÉELLE - Paramètres:', searchParams);
     
-    // Essayer la vraie connexion OMPIC
-    const realResults = await performRealOMPICSearch(searchParams);
+      const startTime = Date.now();
     
-    const searchTime = Date.now() - startTime;
+      // Essayer la vraie connexion OMPIC
+      const realResults = await performRealOMPICSearch(searchParams);
     
-    console.log(`✅ RÉSULTATS RÉELS OMPIC: ${realResults.length} résultats en ${searchTime}ms`);
+      const searchTime = Date.now() - startTime;
+    
+      console.log(`✅ RÉSULTATS RÉELS OMPIC: ${realResults.length} résultats en ${searchTime}ms`);
+    
+      return new Response(
+        JSON.stringify({
+          results: realResults,
+          total: realResults.length,
+          searchTime,
+          source: 'OMPIC Official Database - Real Time Connection',
+          timestamp: new Date().toISOString()
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      )
+    }
     
     return new Response(
       JSON.stringify({
-        results: realResults,
-        total: realResults.length,
-        searchTime,
-        source: 'OMPIC Official Database - Real Time Connection',
-        timestamp: new Date().toISOString()
+        error: 'Action non reconnue',
+        validActions: ['getCaptcha', 'search']
       }),
       {
+        status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
     )
@@ -79,11 +123,93 @@ serve(async (req) => {
   }
 })
 
+async function getCaptchaFromOMPIC(): Promise<{ imageUrl: string }> {
+  console.log('🌐 CONNEXION AU SITE OMPIC POUR CAPTCHA...');
+  
+  try {
+    const ompicUrl = 'http://search.ompic.ma/web/pages/rechercheMarque.do';
+    
+    const response = await fetch(ompicUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP OMPIC: ${response.status} - ${response.statusText}`);
+    }
+    
+    const htmlContent = await response.text();
+    console.log(`📄 HTML OMPIC récupéré: ${htmlContent.length} caractères`);
+    
+    // Extraire l'URL de l'image CAPTCHA
+    const captchaImageUrl = extractCaptchaFromHTML(htmlContent);
+    
+    if (captchaImageUrl) {
+      // Construire l'URL complète
+      const fullImageUrl = captchaImageUrl.startsWith('http')
+        ? captchaImageUrl 
+        : `http://search.ompic.ma${captchaImageUrl}`;
+      
+      console.log('✅ CAPTCHA récupéré:', fullImageUrl);
+      return { imageUrl: fullImageUrl };
+    } else {
+      throw new Error('Image CAPTCHA non trouvée dans la page OMPIC');
+    }
+    
+  } catch (error) {
+    console.error('❌ ERREUR RÉCUPÉRATION CAPTCHA:', error);
+    throw error;
+  }
+}
+
+function extractCaptchaFromHTML(html: string): string | null {
+  try {
+    // Chercher les patterns courants pour les images CAPTCHA
+    const patterns = [
+      /<img[^>]*src="([^"]*captcha[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*verification[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*code[^"]*)"[^>]*>/i,
+      /<img[^>]*src="([^"]*securimage[^"]*)"[^>]*>/i,
+      /<img[^>]*id="[^"]*captcha[^"]*"[^>]*src="([^"]*)"[^>]*>/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        console.log('🎯 Image CAPTCHA trouvée:', match[1]);
+        return match[1];
+      }
+    }
+    
+    // Chercher dans les scripts JavaScript
+    const scriptPattern = /captcha[^"']*["']([^"']+)["']/i;
+    const scriptMatch = html.match(scriptPattern);
+    if (scriptMatch && scriptMatch[1]) {
+      console.log('🎯 CAPTCHA trouvé dans script:', scriptMatch[1]);
+      return scriptMatch[1];
+    }
+    
+    console.log('⚠️ Aucune image CAPTCHA trouvée');
+    return null;
+    
+  } catch (error) {
+    console.error('❌ Erreur extraction CAPTCHA:', error);
+    return null;
+  }
+}
+
 async function performRealOMPICSearch(params: OMPICSearchParams): Promise<OMPICResult[]> {
   console.log('🌐 CONNEXION DIRECTE AU SITE OMPIC OFFICIEL...');
   
   try {
-    const ompicUrl = 'https://search.ompic.ma/web/pages/rechercheMarque.do';
+    const ompicUrl = 'http://search.ompic.ma/web/pages/rechercheMarque.do';
     
     // Préparer les données de recherche exactement comme le site OMPIC
     const formData = new URLSearchParams();
