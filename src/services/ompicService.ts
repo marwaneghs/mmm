@@ -18,7 +18,7 @@ export class OMPICService {
       }
       
       // Récupérer la page de recherche OMPIC
-      const ompicSearchUrl = 'http://www.ompic.ma/fr/content/recherche-sur-les-marques-nationales';
+      const ompicSearchUrl = 'https://www.ompic.ma/fr/content/recherche-sur-les-marques-nationales';
       
       const response = await fetch(ompicSearchUrl, {
         method: 'GET',
@@ -46,7 +46,7 @@ export class OMPICService {
         // Construire l'URL complète
         const fullImageUrl = captchaImageUrl.startsWith('http') 
           ? captchaImageUrl 
-          : `http://www.ompic.ma${captchaImageUrl}`;
+          : `https://www.ompic.ma${captchaImageUrl}`;
         
         // Mettre en cache
         this.captchaCache = {
