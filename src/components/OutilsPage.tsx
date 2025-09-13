@@ -185,6 +185,9 @@ const OutilsPage: React.FC = () => {
       console.log('📊 RÉSULTATS JUSTICE RÉELS REÇUS:', response);
       
       setJusticeResults(response.results);
+      
+      // Ouvrir les résultats dans un nouvel onglet
+      openResultsInNewTab(results.results, results.searchTime, searchParamsWithCaptcha);
       setJusticeSearchTime(response.searchTime);
       
       if (response.results.length === 0) {
