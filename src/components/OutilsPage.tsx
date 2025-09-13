@@ -40,8 +40,9 @@ const OutilsPage: React.FC = () => {
   const [justiceSearchTime, setJusticeSearchTime] = useState<number | null>(null);
   const [justiceSearchError, setJusticeSearchError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<OMPICSearchResult[]>([]);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchTime, setSearchTime] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
-  const [searchTime, setSearchTime] = useState<number | null>(null);
   const [selectedResult, setSelectedResult] = useState<OMPICSearchResult | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([
@@ -119,8 +120,13 @@ const OutilsPage: React.FC = () => {
         const response = await OMPICService.searchMarques(searchParamsWithCaptcha);
         console.log('📊 RÉSULTATS RÉELS REÇUS:', response);
         
+        // Stocker les résultats
         setSearchResults(response.results);
+        setSearchTotal(response.total);
         setSearchTime(response.searchTime);
+        
+        // Ouvrir les résultats dans un nouvel onglet
+        openResultsInNewTab(response.results, response.total, response.searchTime, searchParams);
         
         if (response.results.length === 0) {
           console.log('⚠️ AUCUN RÉSULTAT TROUVÉ SUR OMPIC OFFICIEL');
@@ -141,6 +147,408 @@ const OutilsPage: React.FC = () => {
         console.log('🏁 Recherche terminée');
       }
     }
+  };
+
+  const openResultsInNewTab = (results: OMPICSearchResult[], total: number, searchTime: number, searchParams: OMPICSearchParams) => {
+    // Créer le contenu HTML pour le nouvel onglet
+    const htmlContent = generateResultsHTML(results, total, searchTime, searchParams);
+    
+    // Ouvrir un nouvel onglet avec les résultats
+    const newWindow = window.open('', '_blank');
+    if (newWindow) {
+      newWindow.document.write(htmlContent);
+      newWindow.document.close();
+    }
+  };
+
+  const generateResultsHTML = (results: OMPICSearchResult[], total: number, searchTime: number, searchParams: OMPICSearchParams) => {
+    const searchTerm = searchParams.typeRecherche === 'simple' ? searchParams.query : 
+      [searchParams.nomMarque, searchParams.deposant, searchParams.numeroDepot].filter(Boolean).join(' ');
+    
+    return `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats OMPIC - ${searchTerm}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .search-info {
+            background: #f1f5f9;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .search-info h2 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .search-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .search-detail {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .search-detail strong {
+            color: #1e293b;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 25px 30px;
+            background: #fefefe;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #3b82f6;
+            display: block;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .results-section {
+            padding: 30px;
+        }
+        
+        .results-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .results-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .results-table th {
+            background: #f8fafc;
+            padding: 18px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .results-table td {
+            padding: 18px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
+        }
+        
+        .results-table tr:hover {
+            background: #f8fafc;
+        }
+        
+        .trademark-number {
+            font-weight: bold;
+            color: #3b82f6;
+            font-size: 1.1rem;
+        }
+        
+        .trademark-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .trademark-applicant {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-registered {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .classes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .class-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 60px 30px;
+            color: #64748b;
+        }
+        
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .footer {
+            background: #f8fafc;
+            padding: 20px 30px;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.9rem;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .source-link {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .source-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .results-table {
+                font-size: 0.9rem;
+            }
+            
+            .results-table th,
+            .results-table td {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Résultats OMPIC</h1>
+            <p>Recherche dans la base de données officielle des marques</p>
+        </div>
+        
+        <div class="search-info">
+            <h2>📋 Détails de la recherche</h2>
+            <div class="search-details">
+                <div class="search-detail">
+                    <strong>Terme recherché:</strong>
+                    ${searchTerm}
+                </div>
+                <div class="search-detail">
+                    <strong>Type de recherche:</strong>
+                    ${searchParams.typeRecherche === 'simple' ? 'Recherche simple' : 'Recherche avancée'}
+                </div>
+                <div class="search-detail">
+                    <strong>Date de recherche:</strong>
+                    ${new Date().toLocaleDateString('fr-FR', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}
+                </div>
+                ${searchParams.captchaCode ? `
+                <div class="search-detail">
+                    <strong>Code CAPTCHA utilisé:</strong>
+                    ${searchParams.captchaCode}
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-number">${total}</span>
+                <span class="stat-label">Résultats trouvés</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">${searchTime}ms</span>
+                <span class="stat-label">Temps de recherche</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number">${results.filter(r => r.statut === 'Enregistrée').length}</span>
+                <span class="stat-label">Marques enregistrées</span>
+            </div>
+        </div>
+        
+        <div class="results-section">
+            <div class="results-header">
+                <h2 class="results-title">📊 Résultats de la recherche</h2>
+            </div>
+            
+            ${results.length > 0 ? `
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Numéro Dépôt</th>
+                        <th>Nom de la Marque</th>
+                        <th>Déposant</th>
+                        <th>Date Dépôt</th>
+                        <th>Statut</th>
+                        <th>Classes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${results.map(result => `
+                    <tr>
+                        <td>
+                            <div class="trademark-number">${result.numeroDepot}</div>
+                        </td>
+                        <td>
+                            <div class="trademark-name">${result.nomMarque}</div>
+                            <div class="trademark-applicant">${result.deposant}</div>
+                        </td>
+                        <td>${result.deposant}</td>
+                        <td>${new Date(result.dateDepot).toLocaleDateString('fr-FR')}</td>
+                        <td>
+                            <span class="status-badge ${result.statut === 'Enregistrée' ? 'status-registered' : 'status-pending'}">
+                                ${result.statut}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="classes">
+                                ${result.classes.map(classe => `<span class="class-badge">${classe}</span>`).join('')}
+                            </div>
+                        </td>
+                    </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            ` : `
+            <div class="no-results">
+                <div class="no-results-icon">🔍</div>
+                <h3>Aucun résultat trouvé</h3>
+                <p>Aucune marque ne correspond à vos critères de recherche.</p>
+                <p>Essayez de modifier vos termes de recherche ou vérifiez l'orthographe.</p>
+            </div>
+            `}
+        </div>
+        
+        <div class="footer">
+            <p>
+                Résultats obtenus depuis 
+                <a href="http://search.ompic.ma/web/pages/rechercheMarque.do" target="_blank" class="source-link">
+                    le site officiel OMPIC
+                </a>
+                • Généré par Cabinet IP - Propriété Industrielle
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
   };
 
   const resetForm = () => {
@@ -185,9 +593,6 @@ const OutilsPage: React.FC = () => {
       console.log('📊 RÉSULTATS JUSTICE RÉELS REÇUS:', response);
       
       setJusticeResults(response.results);
-      
-      // Ouvrir les résultats dans un nouvel onglet
-      openResultsInNewTab(results.results, results.searchTime, searchParamsWithCaptcha);
       setJusticeSearchTime(response.searchTime);
       
       if (response.results.length === 0) {
