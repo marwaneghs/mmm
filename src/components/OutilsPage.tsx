@@ -46,6 +46,33 @@ const OutilsPage: React.FC = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([
     'ASTA', 'MAROC TELECOM', 'ATTIJARIWAFA BANK', 'OCP', 'ROYAL AIR MAROC'
   ]);
+  const [captchaCode, setCaptchaCode] = useState('');
+  const [captchaImage, setCaptchaImage] = useState<string>('');
+  const [captchaLoading, setCaptchaLoading] = useState(false);
+  const [showOmpicFrame, setShowOmpicFrame] = useState(false);
+
+  // Charger le CAPTCHA au montage du composant
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
+
+  const loadCaptcha = async () => {
+    setCaptchaLoading(true);
+    try {
+      const captchaData = await OMPICService.getCaptcha();
+      setCaptchaImage(captchaData.imageUrl);
+      console.log('✅ CAPTCHA chargé:', captchaData.imageUrl);
+    } catch (error) {
+      console.error('❌ Erreur chargement CAPTCHA:', error);
+    } finally {
+      setCaptchaLoading(false);
+    }
+  };
+
+  const refreshCaptcha = async () => {
+    OMPICService.invalidateCaptcha();
+    await loadCaptcha();
+  };
 
   const handleOmpicSearch = async () => {
     const hasSearchCriteria = searchParams.query.trim() || 
@@ -53,16 +80,21 @@ const OutilsPage: React.FC = () => {
                              searchParams.nomMarque?.trim() ||
                              searchParams.deposant?.trim();
     
-    if (hasSearchCriteria) {
+    if (hasSearchCriteria && captchaCode.trim()) {
       console.log('🚀 Démarrage recherche OMPIC...');
       setIsSearching(true);
       setSearchResults([]);
       setSearchTime(null);
       setSearchError(null);
+      setShowOmpicFrame(true);
       
       try {
         console.log('📋 Paramètres de recherche:', searchParams);
-        const response = await OMPICService.searchMarques(searchParams);
+        console.log('🔐 Code de vérification:', captchaCode);
+        const response = await OMPICService.searchMarques({
+          ...searchParams,
+          captchaCode: captchaCode
+        } as any);
         console.log('📊 RÉSULTATS RÉELS REÇUS:', response);
         
         setSearchResults(response.results);
@@ -86,6 +118,8 @@ const OutilsPage: React.FC = () => {
         setIsSearching(false);
         console.log('🏁 Recherche terminée');
       }
+    } else if (!captchaCode.trim()) {
+      setSearchError('Veuillez entrer le code de vérification affiché sur le site OMPIC');
     }
   };
 
@@ -98,6 +132,8 @@ const OutilsPage: React.FC = () => {
     });
     setSearchResults([]);
     setSearchError(null);
+    setCaptchaCode('');
+    setShowOmpicFrame(false);
   };
 
   const updateSearchParam = (key: keyof OMPICSearchParams, value: any) => {
@@ -524,10 +560,43 @@ const OutilsPage: React.FC = () => {
             
             {/* Boutons d'action */}
             <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+              {/* Code de vérification CAPTCHA */}
+              <div className="flex items-center space-x-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Code de vérification OMPIC *
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Entrez le code affiché sur OMPIC"
+                      value={captchaCode}
+                      onChange={(e) => setCaptchaCode(e.target.value)}
+                      placeholder="Saisissez le code affiché ci-dessus"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono text-lg"
+                    />
+                    <button
+                    
+                    <div className="text-xs text-blue-600 mt-2 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Code récupéré automatiquement depuis le site OMPIC officiel
+                      type="button"
+                    >
+                      {showOmpicFrame ? 'Masquer' : 'Voir'} OMPIC
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Consultez le site OMPIC pour obtenir le code de vérification
+                  </p>
+                </div>
+              </div>
+              
               <div className="flex space-x-2">
                 <button
                   onClick={handleOmpicSearch}
-                  disabled={isSearching}
+                  disabled={isSearching || !captchaCode.trim()}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors"
                 >
                   {isSearching ? (
@@ -544,15 +613,6 @@ const OutilsPage: React.FC = () => {
                   <span>{t('reset')}</span>
                 </button>
               </div>
-              
-              <button
-                onClick={() => window.open('http://www.ompic.ma/fr/content/recherche-sur-les-marques-nationales', '_blank')}
-                className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1 bg-blue-50 px-3 py-1 rounded-lg"
-              >
-                <Globe className="h-4 w-4" />
-                <span>{t('officialOmpicSite')}</span>
-                <ExternalLink className="h-3 w-3" />
-              </button>
             </div>
           </div>
         </div>
@@ -590,7 +650,7 @@ const OutilsPage: React.FC = () => {
                   <Search className="h-4 w-4" />
                 )}
                 <span>{isJusticeSearching ? t('searching') : t('search')}</span>
-              </button>
+                {/* CAPTCHA OMPIC */}
             </div>
             
             <div className="flex items-center justify-between">
@@ -606,6 +666,57 @@ const OutilsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Iframe OMPIC en parallèle */}
+      {showOmpicFrame && (
+        <div className="bg-white rounded-lg shadow border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+              <Globe className="h-5 w-5 text-blue-500" />
+              <span>Site OMPIC Officiel - Recherche en Temps Réel</span>
+            </h3>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-green-600 flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>Connexion active</span>
+              </span>
+              <button
+                onClick={() => setShowOmpicFrame(false)}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          
+          <div className="border border-gray-300 rounded-lg overflow-hidden" style={{ height: '600px' }}>
+            <iframe
+              src="https://ompic.ma/fr/content/recherche-sur-les-marques-nationales"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              title="Site OMPIC Officiel"
+              className="w-full h-full"
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+            />
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-start space-x-2">
+              <Info className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-semibold mb-1">Instructions :</p>
+                <ol className="list-decimal list-inside space-y-1">
+                  <li>Remplissez le formulaire OMPIC avec les mêmes critères que ci-dessus</li>
+                  <li>Copiez le code de vérification affiché (CAPTCHA) dans le champ ci-dessus</li>
+                  <li>Lancez la recherche pour voir les résultats en temps réel</li>
+                  <li>Comparez les résultats entre les deux interfaces</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search Results */}
       {(searchResults.length > 0 || isSearching) && (
@@ -632,7 +743,7 @@ const OutilsPage: React.FC = () => {
               <p className="text-gray-600 font-semibold">{t('searchingOnOfficialOmpic')}</p>
               <p className="text-sm text-gray-500 mt-2">{t('connectingTo')} search.ompic.ma</p>
               <p className="text-xs text-gray-400 mt-1">
-                Récupération des données réelles en cours...
+                Récupération des données réelles en cours avec code: {captchaCode}
               </p>
             </div>
           ) : searchError ? (
@@ -993,10 +1104,49 @@ const OutilsPage: React.FC = () => {
               
               {selectedResult.description && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('description')}
-                  </label>
-                  <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-blue-800 mb-2">
+                      🔐 Code de vérification OMPIC *
+                    </label>
+                    
+                    {/* Image CAPTCHA */}
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="border-2 border-gray-300 rounded-lg p-2 bg-white">
+                        {captchaLoading ? (
+                          <div className="w-32 h-12 bg-gray-200 animate-pulse rounded flex items-center justify-center">
+                            <span className="text-xs text-gray-500">Chargement...</span>
+                          </div>
+                        ) : captchaImage ? (
+                          <img 
+                            src={captchaImage} 
+                            alt="Code de vérification OMPIC"
+                            className="w-32 h-12 object-contain"
+                            onError={() => {
+                              console.log('❌ Erreur chargement image CAPTCHA');
+                              refreshCaptcha();
+                            }}
+                          />
+                        ) : (
+                          <div className="w-32 h-12 bg-gray-100 rounded flex items-center justify-center">
+                            <span className="text-xs text-gray-500">Aucune image</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={refreshCaptcha}
+                        disabled={captchaLoading}
+                        className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition-colors"
+                        title="Actualiser le code"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {/* Champ de saisie */}
                     {selectedResult.description}
                   </p>
                 </div>
