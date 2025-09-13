@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useEffect } from 'react';
 import { OMPICService } from '../services/ompicService';
 import { JusticeService } from '../services/justiceService';
 import { OMPICSearchResult, OMPICSearchParams } from '../types';
@@ -46,8 +47,56 @@ const OutilsPage: React.FC = () => {
   const [recentSearches, setRecentSearches] = useState<string[]>([
     'ASTA', 'MAROC TELECOM', 'ATTIJARIWAFA BANK', 'OCP', 'ROYAL AIR MAROC'
   ]);
+  const [captchaCode, setCaptchaCode] = useState('');
+  const [captchaImage, setCaptchaImage] = useState<string | null>(null);
+  const [isCaptchaLoading, setIsCaptchaLoading] = useState(false);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+
+  // Charger le CAPTCHA au montage du composant
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
+
+  const loadCaptcha = async () => {
+    setIsCaptchaLoading(true);
+    setCaptchaError(null);
+    
+    try {
+      console.log('🔄 Chargement du CAPTCHA OMPIC...');
+      const captchaData = await OMPICService.getCaptcha();
+      setCaptchaImage(captchaData.imageUrl);
+      console.log('✅ CAPTCHA chargé avec succès');
+    } catch (error) {
+      console.error('❌ Erreur chargement CAPTCHA:', error);
+      setCaptchaError('Impossible de charger le CAPTCHA OMPIC');
+      // Générer un CAPTCHA de fallback
+      setCaptchaImage(generateFallbackCaptcha());
+    } finally {
+      setIsCaptchaLoading(false);
+    }
+  };
+
+  const generateFallbackCaptcha = () => {
+    const code = Math.floor(100 + Math.random() * 900).toString();
+    return `data:image/svg+xml;base64,${btoa(`
+      <svg width="120" height="40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="120" height="40" fill="#f0f0f0" stroke="#ccc"/>
+        <text x="60" y="25" text-anchor="middle" font-family="Arial" font-size="18" font-weight="bold" fill="#333">
+          ${code}
+        </text>
+        <line x1="10" y1="15" x2="30" y2="25" stroke="#999" stroke-width="1"/>
+        <line x1="90" y1="10" x2="110" y2="30" stroke="#999" stroke-width="1"/>
+      </svg>
+    `)}`;
+  };
 
   const handleOmpicSearch = async () => {
+    // Vérifier que le code CAPTCHA est saisi
+    if (!captchaCode.trim()) {
+      setSearchError('Veuillez saisir le code de vérification');
+      return;
+    }
+
     const hasSearchCriteria = searchParams.query.trim() || 
                              searchParams.numeroDepot?.trim() ||
                              searchParams.nomMarque?.trim() ||
@@ -55,14 +104,19 @@ const OutilsPage: React.FC = () => {
     
     if (hasSearchCriteria) {
       console.log('🚀 Démarrage recherche OMPIC...');
+      console.log('🔐 Code CAPTCHA utilisé:', captchaCode);
       setIsSearching(true);
       setSearchResults([]);
       setSearchTime(null);
       setSearchError(null);
       
       try {
-        console.log('📋 Paramètres de recherche:', searchParams);
-        const response = await OMPICService.searchMarques(searchParams);
+        const searchParamsWithCaptcha = {
+          ...searchParams,
+          captchaCode: captchaCode
+        };
+        console.log('📋 Paramètres de recherche:', searchParamsWithCaptcha);
+        const response = await OMPICService.searchMarques(searchParamsWithCaptcha);
         console.log('📊 RÉSULTATS RÉELS REÇUS:', response);
         
         setSearchResults(response.results);
@@ -96,8 +150,11 @@ const OutilsPage: React.FC = () => {
       typeRecherche: 'simple',
       operateur: 'ET'
     });
+    setCaptchaCode('');
     setSearchResults([]);
     setSearchError(null);
+    // Recharger un nouveau CAPTCHA
+    loadCaptcha();
   };
 
   const updateSearchParam = (key: keyof OMPICSearchParams, value: any) => {
@@ -524,10 +581,67 @@ const OutilsPage: React.FC = () => {
             
             {/* Boutons d'action */}
             <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+              {/* Section CAPTCHA */}
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="flex flex-col">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Code de vérification OMPIC
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      {isCaptchaLoading ? (
+                        <div className="w-32 h-12 bg-gray-100 border border-gray-300 rounded-lg flex items-center justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                        </div>
+                      ) : captchaImage ? (
+                        <img 
+                          src={captchaImage} 
+                          alt="Code de vérification OMPIC"
+                          className="w-32 h-12 border border-gray-300 rounded-lg object-cover"
+                          onError={() => {
+                            console.log('❌ Erreur chargement image CAPTCHA');
+                            setCaptchaImage(generateFallbackCaptcha());
+                          }}
+                        />
+                      ) : (
+                        <div className="w-32 h-12 bg-red-50 border border-red-300 rounded-lg flex items-center justify-center">
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={loadCaptcha}
+                      disabled={isCaptchaLoading}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Actualiser le code"
+                    >
+                      <ArrowRight className={`h-4 w-4 ${isCaptchaLoading ? 'animate-spin' : ''}`} />
+                    </button>
+                  </div>
+                  {captchaError && (
+                    <p className="text-xs text-red-600 mt-1">{captchaError}</p>
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Saisissez le code
+                  </label>
+                  <input
+                    type="text"
+                    value={captchaCode}
+                    onChange={(e) => setCaptchaCode(e.target.value.toUpperCase())}
+                    placeholder="Ex: ABC123"
+                    maxLength={6}
+                    className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center font-mono text-lg"
+                  />
+                </div>
+              </div>
+              
               <div className="flex space-x-2">
                 <button
                   onClick={handleOmpicSearch}
-                  disabled={isSearching}
+                  disabled={isSearching || !captchaCode.trim()}
                   className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors"
                 >
                   {isSearching ? (

@@ -72,6 +72,7 @@ export interface OMPICSearchParams {
   dateFin?: string;
   typeRecherche: 'simple' | 'avancee';
   operateur?: 'ET' | 'OU';
+  captchaCode?: string;
 }
 
 export interface JusticeSearchResult {
