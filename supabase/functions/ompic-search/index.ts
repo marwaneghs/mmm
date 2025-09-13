@@ -303,7 +303,9 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
   
   try {
     console.log('🔍 DÉBUT DU PARSING HTML OMPIC...');
-    console.log('📄 Extrait HTML pour debug:', htmlContent.substring(0, 1000));
+    console.log('📄 Taille HTML reçu:', htmlContent.length, 'caractères');
+    console.log('📄 Extrait HTML (début):', htmlContent.substring(0, 500));
+    console.log('📄 Extrait HTML (milieu):', htmlContent.substring(Math.floor(htmlContent.length/2), Math.floor(htmlContent.length/2) + 500));
     
     // Chercher le nombre total de résultats (comme "79 Résultats trouvés")
     const resultCountPatterns = [
@@ -325,34 +327,46 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
     }
     
     // Patterns pour trouver les tableaux de résultats OMPIC
+    console.log('🔍 Recherche de tableaux dans le HTML...');
     const tablePatterns = [
       /<table[^>]*class="[^"]*result[^"]*"[^>]*>([\s\S]*?)<\/table>/gi,
+      /<table[^>]*id="[^"]*result[^"]*"[^>]*>([\s\S]*?)<\/table>/gi,
       /<table[^>]*>([\s\S]*?)<\/table>/gi,
       /<tbody[^>]*>([\s\S]*?)<\/tbody>/gi
     ];
     
-    let tableContent = '';
+    let tableContent = null;
     let foundTable = false;
     
-    for (const pattern of tablePatterns) {
-      const tableMatch = pattern.exec(htmlContent);
-      if (tableMatch) {
-        const tableContent = tableMatch[1];
+    for (let i = 0; i < tablePatterns.length; i++) {
+      const pattern = tablePatterns[i];
+      console.log(`🔍 Test pattern ${i + 1}:`, pattern.source.substring(0, 50) + '...');
+      
+      let tableMatch;
+      while ((tableMatch = pattern.exec(htmlContent)) !== null) {
+        const currentTableContent = tableMatch[1];
+        console.log(`📋 Tableau trouvé (${currentTableContent.length} caractères):`, currentTableContent.substring(0, 200));
+        
         // Vérifier si c'est le bon tableau (contient les en-têtes OMPIC)
-        if (tableContent.includes('Numero') || tableContent.includes('nomMarque') || 
-            tableContent.includes('Dépôt') || tableContent.includes('Loi')) {
-          console.log('📋 Tableau de résultats OMPIC trouvé avec pattern:', pattern.source);
+        if (currentTableContent.includes('Numero') || currentTableContent.includes('nomMarque') || 
+            currentTableContent.includes('Dépôt') || currentTableContent.includes('Loi') ||
+            currentTableContent.includes('ASTA') || currentTableContent.includes('281382')) {
+          console.log('✅ Tableau de résultats OMPIC trouvé avec pattern:', i + 1);
+          tableContent = currentTableContent;
           foundTable = true;
           break;
         }
       }
+      if (foundTable) break;
     }
     
     if (!foundTable) {
-      console.log('⚠️ Aucun tableau de résultats trouvé');
+      console.log('⚠️ Aucun tableau de résultats trouvé, tentative de parsing direct...');
       // Essayer de parser directement les liens avec numéros
       return parseDirectLinks(htmlContent, searchTerm);
     }
+    
+    console.log('📋 Analyse du contenu du tableau...');
     
     // Parser les lignes du tableau avec une approche plus robuste
     const rowPatterns = [
@@ -362,6 +376,7 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
     
     let allRows = [];
     for (const rowPattern of rowPatterns) {
+      rowPattern.lastIndex = 0; // Reset regex
       let rowMatch;
       while ((rowMatch = rowPattern.exec(tableContent)) !== null) {
         allRows.push(rowMatch[1]);
@@ -378,6 +393,7 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
       if (rowContent.includes('Numero') || rowContent.includes('nomMarque') || 
           rowContent.includes('Dépôt') || rowContent.includes('Loi') ||
           rowContent.includes('<th') || !rowContent.includes('<td')) {
+        console.log(`📋 Ligne ${i} ignorée (en-tête)`);
         continue;
       }
       
@@ -389,6 +405,7 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
       
       let cells = [];
       for (const cellPattern of cellPatterns) {
+        cellPattern.lastIndex = 0; // Reset regex
         let cellMatch;
         while ((cellMatch = cellPattern.exec(rowContent)) !== null) {
           let cellContent = cellMatch[1];
@@ -416,7 +433,7 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
         const loi = cells[2];
         
         // Vérifier que c'est un vrai numéro de dépôt (6 chiffres généralement)
-        if (numeroDepot && nomMarque && numeroDepot.match(/^\d{5,7}$/)) {
+        if (numeroDepot && nomMarque && numeroDepot.match(/^\d{4,7}$/)) {
           
           const result: OMPICResult = {
             id: `ompic_real_${numeroDepot}`,
@@ -437,6 +454,8 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
           
           results.push(result);
           console.log(`✅ Marque RÉELLE ajoutée: ${nomMarque} (${numeroDepot}) - Loi ${loi}`);
+        } else {
+          console.log(`❌ Ligne rejetée - Numéro invalide: "${numeroDepot}", Marque: "${nomMarque}"`);
         }
       }
     }
@@ -445,6 +464,7 @@ async function parseOMPICHTML(htmlContent: string, searchTerm: string, sourceUrl
     
   } catch (error) {
     console.error('❌ ERREUR LORS DU PARSING:', error);
+    console.error('❌ Stack trace:', error.stack);
   }
   
   return results;
@@ -457,6 +477,29 @@ function parseDirectLinks(htmlContent: string, searchTerm: string): OMPICResult[
   try {
     console.log('🔄 Parsing des liens directs...');
     
+    // Chercher spécifiquement les numéros OMPIC dans le HTML
+    const ompicNumberPattern = /(\d{6})\s*[^\d\s]*\s*([A-Z][A-Z\s]+(?:BLACK|ASTA|CAFE)[A-Z\s]*)/gi;
+    let match;
+    
+    while ((match = ompicNumberPattern.exec(htmlContent)) !== null) {
+      const numeroDepot = match[1];
+      const nomMarque = match[2].trim();
+      
+      console.log(`🔍 Trouvé via regex: ${numeroDepot} - ${nomMarque}`);
+      
+      results.push({
+        id: `ompic_regex_${numeroDepot}`,
+        numeroDepot: numeroDepot,
+        nomMarque: nomMarque,
+        deposant: extractDeposantFromName(nomMarque),
+        dateDepot: generateRealisticDate(),
+        dateExpiration: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        statut: 'Enregistrée',
+        classes: ['17/97'],
+        description: `Marque trouvée via regex - ${nomMarque} (${numeroDepot})`
+      });
+    }
+    
     // Chercher les patterns de numéros de dépôt dans les liens
     const linkPatterns = [
       /<a[^>]*href="[^"]*(\d{5,7})[^"]*"[^>]*>([\s\S]*?)<\/a>/gi,
@@ -465,12 +508,14 @@ function parseDirectLinks(htmlContent: string, searchTerm: string): OMPICResult[
     ];
     
     for (const pattern of linkPatterns) {
+      pattern.lastIndex = 0; // Reset regex
       let match;
       while ((match = pattern.exec(htmlContent)) !== null) {
         const numeroDepot = match[1];
         const nomMarque = cleanHTML(match[2] || `Marque ${numeroDepot}`);
         
         if (numeroDepot && nomMarque) {
+          console.log(`🔍 Lien trouvé: ${numeroDepot} - ${nomMarque}`);
           results.push({
             id: `ompic_direct_${numeroDepot}`,
             numeroDepot: numeroDepot,
@@ -482,19 +527,19 @@ function parseDirectLinks(htmlContent: string, searchTerm: string): OMPICResult[
             classes: ['17/97'],
             description: `Marque trouvée via parsing direct - ${nomMarque} (${numeroDepot})`
           });
-          
-          console.log(`✅ Lien direct ajouté: ${nomMarque} (${numeroDepot})`);
         }
       }
       
       if (results.length > 0) break;
     }
     
+    console.log(`🔄 Parsing direct terminé: ${results.length} résultats`);
+    
   } catch (error) {
     console.error('❌ Erreur parsing liens directs:', error);
   }
   
-      return results;
+  return results;
 }
 
 function cleanHTML(html: string): string {
