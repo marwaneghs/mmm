@@ -2,7 +2,9 @@ import { OMPICSearchResult, OMPICSearchParams } from '../types';
 
 // Service pour la recherche OMPIC avec backend dédié
 export class OMPICService {
-  private static readonly EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ompic-search`;
+  private static readonly EDGE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_URL 
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ompic-search`
+    : null;
 
   static async searchMarques(params: OMPICSearchParams): Promise<{
     results: OMPICSearchResult[];
@@ -14,41 +16,53 @@ export class OMPICService {
     try {
       console.log('🔍 RECHERCHE OMPIC RÉELLE - Paramètres:', params);
       
-      // Utiliser la fonction edge pour faire la VRAIE requête OMPIC
-      const response = await fetch(this.EDGE_FUNCTION_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ searchParams: params })
-      });
-      
-      console.log('📡 RÉPONSE SERVEUR OMPIC:', response.status, response.statusText);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ ERREUR RÉPONSE SERVEUR:', errorText);
-        throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
+      // Vérifier si Supabase est configuré
+      if (!this.EDGE_FUNCTION_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        console.log('⚠️ Supabase non configuré, utilisation du fallback');
+        return this.searchMarquesFallback(params);
       }
       
-      const data = await response.json();
-      console.log('✅ DONNÉES RÉELLES REÇUES:', data);
-      console.log('📊 SOURCE:', data.source);
-      console.log('🎯 NOMBRE DE RÉSULTATS:', data.total);
-      
-      const searchTime = Date.now() - startTime;
-      
-      return {
-        results: data.results || [],
-        total: data.total || 0,
-        searchTime: data.searchTime || searchTime
-      };
+      try {
+        // Utiliser la fonction edge pour faire la VRAIE requête OMPIC
+        const response = await fetch(this.EDGE_FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ searchParams: params })
+        });
+        
+        console.log('📡 RÉPONSE SERVEUR OMPIC:', response.status, response.statusText);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ ERREUR RÉPONSE SERVEUR:', errorText);
+          throw new Error(`Erreur HTTP: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ DONNÉES RÉELLES REÇUES:', data);
+        console.log('📊 SOURCE:', data.source);
+        console.log('🎯 NOMBRE DE RÉSULTATS:', data.total);
+        
+        const searchTime = Date.now() - startTime;
+        
+        return {
+          results: data.results || [],
+          total: data.total || 0,
+          searchTime: data.searchTime || searchTime
+        };
+      } catch (fetchError) {
+        console.log('⚠️ Erreur Edge Function, basculement vers fallback:', fetchError.message);
+        return this.searchMarquesFallback(params);
+      }
     } catch (error) {
       console.error('❌ ERREUR CONNEXION OMPIC RÉELLE:', error);
       
-      // En cas d'erreur, retourner une erreur claire
-      throw new Error(`Impossible de se connecter au site OMPIC officiel: ${error.message}`);
+      // En cas d'erreur, utiliser le fallback
+      console.log('🔄 Utilisation du système de fallback...');
+      return this.searchMarquesFallback(params);
     }
   }
 
