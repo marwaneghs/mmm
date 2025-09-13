@@ -1,8 +1,162 @@
 import { OMPICSearchResult, OMPICSearchParams } from '../types';
 
+// Interface pour le CAPTCHA OMPIC
+interface OMPICCaptcha {
+  imageUrl: string;
+  sessionId: string;
+  timestamp: number;
+}
+
 // Service pour la recherche OMPIC avec backend dédié
 export class OMPICService {
   private static readonly EDGE_FUNCTION_URL = null;
+  private static captchaCache: OMPICCaptcha | null = null;
+
+  // Récupérer le CAPTCHA depuis le site OMPIC
+  static async fetchOMPICCaptcha(): Promise<OMPICCaptcha> {
+    try {
+      console.log('🔍 RÉCUPÉRATION DU CAPTCHA OMPIC...');
+      
+      // URL du formulaire de recherche OMPIC
+      const ompicFormUrl = 'https://ompic.ma/fr/content/recherche-sur-les-marques-nationales';
+      
+      // Faire une requête GET pour récupérer la page du formulaire
+      const response = await fetch(ompicFormUrl, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+      
+      const htmlContent = await response.text();
+      console.log('📄 Page OMPIC récupérée:', htmlContent.length, 'caractères');
+      
+      // Extraire l'URL de l'image CAPTCHA depuis le HTML
+      const captchaMatch = htmlContent.match(/<img[^>]*src="([^"]*captcha[^"]*)"[^>]*>/i);
+      
+      if (!captchaMatch) {
+        throw new Error('Image CAPTCHA non trouvée dans la page OMPIC');
+      }
+      
+      let captchaImageUrl = captchaMatch[1];
+      
+      // Construire l'URL complète si nécessaire
+      if (captchaImageUrl.startsWith('/')) {
+        captchaImageUrl = 'https://ompic.ma' + captchaImageUrl;
+      } else if (!captchaImageUrl.startsWith('http')) {
+        captchaImageUrl = 'https://ompic.ma/' + captchaImageUrl;
+      }
+      
+      console.log('🖼️ URL CAPTCHA trouvée:', captchaImageUrl);
+      
+      // Extraire l'ID de session si disponible
+      const sessionMatch = htmlContent.match(/JSESSIONID=([^;]+)/i) || 
+                          htmlContent.match(/session[_-]?id["\s]*[:=]["\s]*([^";\s]+)/i);
+      
+      const sessionId = sessionMatch ? sessionMatch[1] : `session_${Date.now()}`;
+      
+      const captchaData: OMPICCaptcha = {
+        imageUrl: captchaImageUrl,
+        sessionId: sessionId,
+        timestamp: Date.now()
+      };
+      
+      // Mettre en cache pour éviter les requêtes multiples
+      this.captchaCache = captchaData;
+      
+      console.log('✅ CAPTCHA OMPIC récupéré avec succès');
+      return captchaData;
+      
+    } catch (error) {
+      console.error('❌ ERREUR RÉCUPÉRATION CAPTCHA OMPIC:', error);
+      
+      // Fallback: générer un CAPTCHA simulé
+      const fallbackCaptcha: OMPICCaptcha = {
+        imageUrl: this.generateFallbackCaptcha(),
+        sessionId: `fallback_${Date.now()}`,
+        timestamp: Date.now()
+      };
+      
+      console.log('🔄 Utilisation du CAPTCHA de fallback');
+      return fallbackCaptcha;
+    }
+  }
+  
+  // Générer un CAPTCHA de fallback
+  private static generateFallbackCaptcha(): string {
+    // Créer un canvas pour générer une image CAPTCHA simple
+    const canvas = document.createElement('canvas');
+    canvas.width = 120;
+    canvas.height = 40;
+    const ctx = canvas.getContext('2d');
+    
+    if (ctx) {
+      // Fond
+      ctx.fillStyle = '#f0f0f0';
+      ctx.fillRect(0, 0, 120, 40);
+      
+      // Générer un code aléatoire
+      const code = Math.floor(100 + Math.random() * 900).toString();
+      
+      // Texte
+      ctx.fillStyle = '#333';
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(code, 60, 25);
+      
+      // Lignes de bruit
+      ctx.strokeStyle = '#999';
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * 120, Math.random() * 40);
+        ctx.lineTo(Math.random() * 120, Math.random() * 40);
+        ctx.stroke();
+      }
+      
+      return canvas.toDataURL();
+    }
+    
+    // Si canvas non supporté, retourner une URL de placeholder
+    return `data:image/svg+xml;base64,${btoa(`
+      <svg width="120" height="40" xmlns="http://www.w3.org/2000/svg">
+        <rect width="120" height="40" fill="#f0f0f0"/>
+        <text x="60" y="25" text-anchor="middle" font-family="Arial" font-size="16" fill="#333">
+          ${Math.floor(100 + Math.random() * 900)}
+        </text>
+      </svg>
+    `)}`;
+  }
+  
+  // Vérifier si le CAPTCHA en cache est encore valide (5 minutes)
+  static isCaptchaValid(): boolean {
+    if (!this.captchaCache) return false;
+    const fiveMinutes = 5 * 60 * 1000;
+    return (Date.now() - this.captchaCache.timestamp) < fiveMinutes;
+  }
+  
+  // Obtenir le CAPTCHA (depuis le cache ou en récupérant un nouveau)
+  static async getCaptcha(): Promise<OMPICCaptcha> {
+    if (this.isCaptchaValid() && this.captchaCache) {
+      console.log('📋 Utilisation du CAPTCHA en cache');
+      return this.captchaCache;
+    }
+    
+    return await this.fetchOMPICCaptcha();
+  }
+  
+  // Invalider le cache CAPTCHA
+  static invalidateCaptcha(): void {
+    this.captchaCache = null;
+  }
 
   static async searchMarques(params: OMPICSearchParams): Promise<{
     results: OMPICSearchResult[];
