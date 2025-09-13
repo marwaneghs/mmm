@@ -163,11 +163,7 @@ const OutilsPage: React.FC = () => {
 
   const generateResultsHTML = (results: OMPICSearchResult[], total: number, searchTime: number, searchParams: OMPICSearchParams) => {
     const searchTerm = searchParams.typeRecherche === 'simple' ? searchParams.query : 
-      [searchParams.nomMarque, searchParams.deposant, searchParams.numeroDepot].filter(Boolean).join(' ');
-    
-    const searchTerm = searchParams.typeRecherche === 'simple' 
-      ? searchParams.query 
-      : searchParams.nomMarque || searchParams.numeroDepot || 'Recherche avancée';
+      : [searchParams.nomMarque, searchParams.deposant, searchParams.numeroDepot].filter(Boolean).join(' ');
     
     return `
 <!DOCTYPE html>
