@@ -2,9 +2,7 @@ import { OMPICSearchResult, OMPICSearchParams } from '../types';
 
 // Service pour la recherche OMPIC avec backend dédié
 export class OMPICService {
-  private static readonly EDGE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_URL 
-    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ompic-search`
-    : null;
+  private static readonly EDGE_FUNCTION_URL = null;
 
   static async searchMarques(params: OMPICSearchParams): Promise<{
     results: OMPICSearchResult[];
